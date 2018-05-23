@@ -108,6 +108,12 @@ if (LLVM_ENABLE_WERROR)
     set_property(SOURCE ${LLDB_WRAP_PYTHON} APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
   endif()
 endif()
+
+if (NOT MSVC)
+  # The wrapper code produces some warnings that we should ignore.
+  set_property(SOURCE ${LLDB_WRAP_PYTHON} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-sign-compare -Wno-format-security")
+endif()
+
 set_source_files_properties(${LLDB_WRAP_PYTHON} PROPERTIES GENERATED 1)
 if (CLANG_CL)
   set_property(SOURCE ${LLDB_WRAP_PYTHON} APPEND_STRING
