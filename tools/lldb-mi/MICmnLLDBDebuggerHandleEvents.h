@@ -10,6 +10,7 @@
 #pragma once
 
 // In-house headers:
+#include "lldb/API/SBEvent.h"
 #include "MICmnBase.h"
 #include "MICmnMIValueList.h"
 #include "MICmnMIValueTuple.h"
