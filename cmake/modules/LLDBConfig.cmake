@@ -254,6 +254,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_definitions( -D_UNICODE -DUNICODE )
 endif()
 
+if (LLVM_ENABLE_MODULES)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmodule-map-file=${CMAKE_CURRENT_SOURCE_DIR}/source/module.modulemap")
+endif()
+
 set(LLDB_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LLDB_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
