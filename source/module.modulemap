@@ -1,0 +1,594 @@
+
+module lldb_src_API {
+  module SBBreakpointOptionCommon { header "API/SBBreakpointOptionCommon.h" export * }
+}
+module lldb_src_Commands {
+  module CommandObjectApropos { header "Commands/CommandObjectApropos.h" export * }
+  module CommandObjectBreakpointCommand { header "Commands/CommandObjectBreakpointCommand.h" export * }
+  module CommandObjectBreakpoint { header "Commands/CommandObjectBreakpoint.h" export * }
+  module CommandObjectBugreport { header "Commands/CommandObjectBugreport.h" export * }
+  module CommandObjectCommands { header "Commands/CommandObjectCommands.h" export * }
+  module CommandObjectDisassemble { header "Commands/CommandObjectDisassemble.h" export * }
+  module CommandObjectExpression { header "Commands/CommandObjectExpression.h" export * }
+  module CommandObjectFrame { header "Commands/CommandObjectFrame.h" export * }
+  module CommandObjectGUI { header "Commands/CommandObjectGUI.h" export * }
+  module CommandObjectHelp { header "Commands/CommandObjectHelp.h" export * }
+  module CommandObjectLanguage { header "Commands/CommandObjectLanguage.h" export * }
+  module CommandObjectLog { header "Commands/CommandObjectLog.h" export * }
+  module CommandObjectMemory { header "Commands/CommandObjectMemory.h" export * }
+  module CommandObjectPlatform { header "Commands/CommandObjectPlatform.h" export * }
+  module CommandObjectPlugin { header "Commands/CommandObjectPlugin.h" export * }
+  module CommandObjectProcess { header "Commands/CommandObjectProcess.h" export * }
+  module CommandObjectQuit { header "Commands/CommandObjectQuit.h" export * }
+  module CommandObjectRegister { header "Commands/CommandObjectRegister.h" export * }
+  module CommandObjectSettings { header "Commands/CommandObjectSettings.h" export * }
+  module CommandObjectSource { header "Commands/CommandObjectSource.h" export * }
+  module CommandObjectStats { header "Commands/CommandObjectStats.h" export * }
+  module CommandObjectTarget { header "Commands/CommandObjectTarget.h" export * }
+  module CommandObjectThread { header "Commands/CommandObjectThread.h" export * }
+  module CommandObjectType { header "Commands/CommandObjectType.h" export * }
+  module CommandObjectVersion { header "Commands/CommandObjectVersion.h" export * }
+  module CommandObjectWatchpointCommand { header "Commands/CommandObjectWatchpointCommand.h" export * }
+  module CommandObjectWatchpoint { header "Commands/CommandObjectWatchpoint.h" export * }
+}
+module lldb_src_Hostmacosxcfcpp {
+  module CFCBundle { header "Host/macosx/cfcpp/CFCBundle.h" export * }
+  module CFCData { header "Host/macosx/cfcpp/CFCData.h" export * }
+  module CFCMutableArray { header "Host/macosx/cfcpp/CFCMutableArray.h" export * }
+  module CFCMutableDictionary { header "Host/macosx/cfcpp/CFCMutableDictionary.h" export * }
+  module CFCMutableSet { header "Host/macosx/cfcpp/CFCMutableSet.h" export * }
+  module CFCReleaser { header "Host/macosx/cfcpp/CFCReleaser.h" export * }
+  module CFCString { header "Host/macosx/cfcpp/CFCString.h" export * }
+  module CoreFoundationCPP { header "Host/macosx/cfcpp/CoreFoundationCPP.h" export * }
+}
+module lldb_src_Interpreter {
+  module CommandObjectScript { header "Interpreter/CommandObjectScript.h" export * }
+}
+module lldb_src_PluginsABIMacOSXarm {
+  module ABIMacOSX_arm { header "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h" export * }
+}
+module lldb_src_PluginsABIMacOSXarm64 {
+  module ABIMacOSX_arm64 { header "Plugins/ABI/MacOSX-arm64/ABIMacOSX_arm64.h" export * }
+}
+module lldb_src_PluginsABIMacOSXi386 {
+  module ABIMacOSX_i386 { header "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h" export * }
+}
+module lldb_src_PluginsABISysVarm {
+  module ABISysV_arm { header "Plugins/ABI/SysV-arm/ABISysV_arm.h" export * }
+}
+module lldb_src_PluginsABISysVarm64 {
+  module ABISysV_arm64 { header "Plugins/ABI/SysV-arm64/ABISysV_arm64.h" export * }
+}
+module lldb_src_PluginsABISysVhexagon {
+  module ABISysV_hexagon { header "Plugins/ABI/SysV-hexagon/ABISysV_hexagon.h" export * }
+}
+module lldb_src_PluginsABISysVi386 {
+  module ABISysV_i386 { header "Plugins/ABI/SysV-i386/ABISysV_i386.h" export * }
+}
+module lldb_src_PluginsABISysVmips {
+  module ABISysV_mips { header "Plugins/ABI/SysV-mips/ABISysV_mips.h" export * }
+}
+module lldb_src_PluginsABISysVmips64 {
+  module ABISysV_mips64 { header "Plugins/ABI/SysV-mips64/ABISysV_mips64.h" export * }
+}
+module lldb_src_PluginsABISysVppc {
+  module ABISysV_ppc { header "Plugins/ABI/SysV-ppc/ABISysV_ppc.h" export * }
+}
+module lldb_src_PluginsABISysVppc64 {
+  module ABISysV_ppc64 { header "Plugins/ABI/SysV-ppc64/ABISysV_ppc64.h" export * }
+}
+module lldb_src_PluginsABISysVs390x {
+  module ABISysV_s390x { header "Plugins/ABI/SysV-s390x/ABISysV_s390x.h" export * }
+}
+module lldb_src_PluginsABISysVx86_64 {
+  module ABISysV_x86_64 { header "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h" export * }
+}
+module lldb_src_PluginsArchitectureArm {
+  module ArchitectureArm { header "Plugins/Architecture/Arm/ArchitectureArm.h" export * }
+}
+module lldb_src_PluginsArchitecturePPC64 {
+  module ArchitecturePPC64 { header "Plugins/Architecture/PPC64/ArchitecturePPC64.h" export * }
+}
+module lldb_src_PluginsDisassemblerllvm {
+  module DisassemblerLLVMC { header "Plugins/Disassembler/llvm/DisassemblerLLVMC.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderDarwinKernel {
+  module DynamicLoaderDarwinKernel { header "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderHexagonDYLD {
+  module DynamicLoaderHexagonDYLD { header "Plugins/DynamicLoader/Hexagon-DYLD/DynamicLoaderHexagonDYLD.h" export * }
+  module HexagonDYLDRendezvous { header "Plugins/DynamicLoader/Hexagon-DYLD/HexagonDYLDRendezvous.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderMacOSXDYLD {
+  module DynamicLoaderDarwin { header "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderDarwin.h" export * }
+  module DynamicLoaderMacOS { header "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOS.h" export * }
+  module DynamicLoaderMacOSXDYLD { header "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderPOSIXDYLD {
+  module AuxVector { header "Plugins/DynamicLoader/POSIX-DYLD/AuxVector.h" export * }
+  module DYLDRendezvous { header "Plugins/DynamicLoader/POSIX-DYLD/DYLDRendezvous.h" export * }
+  module DynamicLoaderPOSIXDYLD { header "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderStatic {
+  module DynamicLoaderStatic { header "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h" export * }
+}
+module lldb_src_PluginsDynamicLoaderWindowsDYLD {
+  module DynamicLoaderWindowsDYLD { header "Plugins/DynamicLoader/Windows-DYLD/DynamicLoaderWindowsDYLD.h" export * }
+}
+/*
+Cyclic dependency:
+While building module 'lldb_Wrapper' imported from /data/llvm/llvm/tools/lldb/source/Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOS.cpp:10:                            
+While building module 'PluginsExpressionParserClang' imported from /data/llvm/llvm/tools/lldb/include/lldb/Symbol/ClangASTContext.h:33:                                      
+In file included from <module-includes>:2:
+/data/llvm/llvm/tools/lldb/source/./Plugins/ExpressionParser/Clang/ASTResultSynthesizer.h:13:10: fatal error: cyclic dependency in module 'lldb_Wrapper': lldb_Wrapper -> Plug
+insExpressionParserClang -> lldb_Wrapper
+#include "lldb/Core/ClangForward.h"
+
+module lldb_src_PluginsExpressionParserClang {
+  module ASTDumper { header "Plugins/ExpressionParser/Clang/ASTDumper.h" export * }
+  module ASTResultSynthesizer { header "Plugins/ExpressionParser/Clang/ASTResultSynthesizer.h" export * }
+  module ASTStructExtractor { header "Plugins/ExpressionParser/Clang/ASTStructExtractor.h" export * }
+  module ClangASTSource { header "Plugins/ExpressionParser/Clang/ClangASTSource.h" export * }
+  module ClangDiagnostic { header "Plugins/ExpressionParser/Clang/ClangDiagnostic.h" export * }
+  module ClangExpressionDeclMap { header "Plugins/ExpressionParser/Clang/ClangExpressionDeclMap.h" export * }
+  module ClangExpressionHelper { header "Plugins/ExpressionParser/Clang/ClangExpressionHelper.h" export * }
+  module ClangExpressionParser { header "Plugins/ExpressionParser/Clang/ClangExpressionParser.h" export * }
+  module ClangExpressionVariable { header "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h" export * }
+  module ClangFunctionCaller { header "Plugins/ExpressionParser/Clang/ClangFunctionCaller.h" export * }
+  module ClangModulesDeclVendor { header "Plugins/ExpressionParser/Clang/ClangModulesDeclVendor.h" export * }
+  module ClangPersistentVariables { header "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h" export * }
+  module ClangUserExpression { header "Plugins/ExpressionParser/Clang/ClangUserExpression.h" export * }
+  module ClangUtilityFunction { header "Plugins/ExpressionParser/Clang/ClangUtilityFunction.h" export * }
+  module IRForTarget { header "Plugins/ExpressionParser/Clang/IRForTarget.h" export * }
+}
+*/
+
+module lldb_src_PluginsExpressionParserGo {
+  module GoAST { header "Plugins/ExpressionParser/Go/GoAST.h" export * }
+  module GoLexer { header "Plugins/ExpressionParser/Go/GoLexer.h" export * }
+  module GoParser { header "Plugins/ExpressionParser/Go/GoParser.h" export * }
+  module GoUserExpression { header "Plugins/ExpressionParser/Go/GoUserExpression.h" export * }
+}
+module lldb_src_PluginsInstructionARM {
+  module EmulateInstructionARM { header "Plugins/Instruction/ARM/EmulateInstructionARM.h" export * }
+  module EmulationStateARM { header "Plugins/Instruction/ARM/EmulationStateARM.h" export * }
+}
+module lldb_src_PluginsInstructionARM64 {
+  module EmulateInstructionARM64 { header "Plugins/Instruction/ARM64/EmulateInstructionARM64.h" export * }
+}
+module lldb_src_PluginsInstructionMIPS {
+  module EmulateInstructionMIPS { header "Plugins/Instruction/MIPS/EmulateInstructionMIPS.h" export * }
+}
+module lldb_src_PluginsInstructionMIPS64 {
+  module EmulateInstructionMIPS64 { header "Plugins/Instruction/MIPS64/EmulateInstructionMIPS64.h" export * }
+}
+module lldb_src_PluginsInstructionPPC64 {
+  module EmulateInstructionPPC64 { header "Plugins/Instruction/PPC64/EmulateInstructionPPC64.h" export * }
+}
+module lldb_src_PluginsInstrumentationRuntimeASan {
+  module ASanRuntime { header "Plugins/InstrumentationRuntime/ASan/ASanRuntime.h" export * }
+}
+module lldb_src_PluginsInstrumentationRuntimeMainThreadChecker {
+  module MainThreadCheckerRuntime { header "Plugins/InstrumentationRuntime/MainThreadChecker/MainThreadCheckerRuntime.h" export * }
+}
+module lldb_src_PluginsInstrumentationRuntimeTSan {
+  module TSanRuntime { header "Plugins/InstrumentationRuntime/TSan/TSanRuntime.h" export * }
+}
+module lldb_src_PluginsInstrumentationRuntimeUBSan {
+  module UBSanRuntime { header "Plugins/InstrumentationRuntime/UBSan/UBSanRuntime.h" export * }
+}
+module lldb_src_PluginsJITLoaderGDB {
+  module JITLoaderGDB { header "Plugins/JITLoader/GDB/JITLoaderGDB.h" export * }
+}
+module lldb_src_PluginsLanguageCPlusPlus {
+  module BlockPointer { header "Plugins/Language/CPlusPlus/BlockPointer.h" export * }
+  module CPlusPlusLanguage { header "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h" export * }
+  module CPlusPlusNameParser { header "Plugins/Language/CPlusPlus/CPlusPlusNameParser.h" export * }
+  module CxxStringTypes { header "Plugins/Language/CPlusPlus/CxxStringTypes.h" export * }
+  module LibCxxAtomic { header "Plugins/Language/CPlusPlus/LibCxxAtomic.h" export * }
+  module LibCxx { header "Plugins/Language/CPlusPlus/LibCxx.h" export * }
+  module LibStdcpp { header "Plugins/Language/CPlusPlus/LibStdcpp.h" export * }
+}
+module lldb_src_PluginsLanguageGo {
+  module GoFormatterFunctions { header "Plugins/Language/Go/GoFormatterFunctions.h" export * }
+  module GoLanguage { header "Plugins/Language/Go/GoLanguage.h" export * }
+}
+module lldb_src_PluginsLanguageJava {
+  module JavaFormatterFunctions { header "Plugins/Language/Java/JavaFormatterFunctions.h" export * }
+  module JavaLanguage { header "Plugins/Language/Java/JavaLanguage.h" export * }
+}
+module lldb_src_PluginsLanguageObjC {
+  module CF { header "Plugins/Language/ObjC/CF.h" export * }
+  module Cocoa { header "Plugins/Language/ObjC/Cocoa.h" export * }
+  module CoreMedia { header "Plugins/Language/ObjC/CoreMedia.h" export * }
+  module NSDictionary { header "Plugins/Language/ObjC/NSDictionary.h" export * }
+  module NSSet { header "Plugins/Language/ObjC/NSSet.h" export * }
+  module NSString { header "Plugins/Language/ObjC/NSString.h" export * }
+  module ObjCLanguage { header "Plugins/Language/ObjC/ObjCLanguage.h" export * }
+}
+module lldb_src_PluginsLanguageObjCPlusPlus {
+  module ObjCPlusPlusLanguage { header "Plugins/Language/ObjCPlusPlus/ObjCPlusPlusLanguage.h" export * }
+}
+module lldb_src_PluginsLanguageOCaml {
+  module OCamlLanguage { header "Plugins/Language/OCaml/OCamlLanguage.h" export * }
+}
+module lldb_src_PluginsLanguageRuntimeCPlusPlusItaniumABI {
+  module ItaniumABILanguageRuntime { header "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h" export * }
+}
+module lldb_src_PluginsLanguageRuntimeGo {
+  module GoLanguageRuntime { header "Plugins/LanguageRuntime/Go/GoLanguageRuntime.h" export * }
+}
+module lldb_src_PluginsLanguageRuntimeJava {
+  module JavaLanguageRuntime { header "Plugins/LanguageRuntime/Java/JavaLanguageRuntime.h" export * }
+}
+module lldb_src_PluginsLanguageRuntimeObjCAppleObjCRuntime {
+  module AppleObjCClassDescriptorV2 { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCClassDescriptorV2.h" export * }
+  module AppleObjCDeclVendor { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCDeclVendor.h" export * }
+  module AppleObjCRuntime { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntime.h" export * }
+  module AppleObjCRuntimeV1 { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h" export * }
+  module AppleObjCRuntimeV2 { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h" export * }
+  module AppleObjCTrampolineHandler { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCTrampolineHandler.h" export * }
+  module AppleObjCTypeEncodingParser { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCTypeEncodingParser.h" export * }
+  module AppleThreadPlanStepThroughObjCTrampoline { header "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleThreadPlanStepThroughObjCTrampoline.h" export * }
+}
+module lldb_src_PluginsLanguageRuntimeRenderScriptRenderScriptRuntime {
+  module RenderScriptExpressionOpts { header "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptExpressionOpts.h" export * }
+  module RenderScriptRuntime { header "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptRuntime.h" export * }
+  module RenderScriptScriptGroup { header "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptScriptGroup.h" export * }
+  module RenderScriptx86ABIFixups { header "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptx86ABIFixups.h" export * }
+}
+module lldb_src_PluginsMemoryHistoryasan {
+  module MemoryHistoryASan { header "Plugins/MemoryHistory/asan/MemoryHistoryASan.h" export * }
+}
+module lldb_src_PluginsObjectContainerBSDArchive {
+  module ObjectContainerBSDArchive { header "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h" export * }
+}
+module lldb_src_PluginsObjectContainerUniversalMachO {
+  module ObjectContainerUniversalMachO { header "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h" export * }
+}
+module lldb_src_PluginsObjectFileELF {
+  module ELFHeader { header "Plugins/ObjectFile/ELF/ELFHeader.h" export * }
+  module ObjectFileELF { header "Plugins/ObjectFile/ELF/ObjectFileELF.h" export * }
+}
+module lldb_src_PluginsObjectFileJIT {
+  module ObjectFileJIT { header "Plugins/ObjectFile/JIT/ObjectFileJIT.h" export * }
+}
+module lldb_src_PluginsObjectFileMachO {
+  module ObjectFileMachO { header "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h" export * }
+}
+module lldb_src_PluginsObjectFilePECOFF {
+  module ObjectFilePECOFF { header "Plugins/ObjectFile/PECOFF/ObjectFilePECOFF.h" export * }
+  module WindowsMiniDump { header "Plugins/ObjectFile/PECOFF/WindowsMiniDump.h" export * }
+}
+module lldb_src_PluginsOperatingSystemGo {
+  module OperatingSystemGo { header "Plugins/OperatingSystem/Go/OperatingSystemGo.h" export * }
+}
+module lldb_src_PluginsOperatingSystemPython {
+  module OperatingSystemPython { header "Plugins/OperatingSystem/Python/OperatingSystemPython.h" export * }
+}
+module lldb_src_PluginsPlatformAndroid {
+  module AdbClient { header "Plugins/Platform/Android/AdbClient.h" export * }
+  module PlatformAndroid { header "Plugins/Platform/Android/PlatformAndroid.h" export * }
+  module PlatformAndroidRemoteGDBServer { header "Plugins/Platform/Android/PlatformAndroidRemoteGDBServer.h" export * }
+}
+module lldb_src_PluginsPlatformFreeBSD {
+  module PlatformFreeBSD { header "Plugins/Platform/FreeBSD/PlatformFreeBSD.h" export * }
+}
+module lldb_src_PluginsPlatformgdbserver {
+  module PlatformRemoteGDBServer { header "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h" export * }
+}
+module lldb_src_PluginsPlatformKalimba {
+  module PlatformKalimba { header "Plugins/Platform/Kalimba/PlatformKalimba.h" export * }
+}
+module lldb_src_PluginsPlatformLinux {
+  module PlatformLinux { header "Plugins/Platform/Linux/PlatformLinux.h" export * }
+}
+module lldb_src_PluginsPlatformMacOSX {
+  module PlatformAppleSimulator { header "Plugins/Platform/MacOSX/PlatformAppleSimulator.h" export * }
+  module PlatformAppleTVSimulator { header "Plugins/Platform/MacOSX/PlatformAppleTVSimulator.h" export * }
+  module PlatformAppleWatchSimulator { header "Plugins/Platform/MacOSX/PlatformAppleWatchSimulator.h" export * }
+  module PlatformDarwin { header "Plugins/Platform/MacOSX/PlatformDarwin.h" export * }
+  module PlatformDarwinKernel { header "Plugins/Platform/MacOSX/PlatformDarwinKernel.h" export * }
+  module PlatformiOSSimulatorCoreSimulatorSupport { header "Plugins/Platform/MacOSX/PlatformiOSSimulatorCoreSimulatorSupport.h" export * }
+  module PlatformiOSSimulator { header "Plugins/Platform/MacOSX/PlatformiOSSimulator.h" export * }
+  module PlatformMacOSX { header "Plugins/Platform/MacOSX/PlatformMacOSX.h" export * }
+  module PlatformRemoteAppleTV { header "Plugins/Platform/MacOSX/PlatformRemoteAppleTV.h" export * }
+  module PlatformRemoteAppleWatch { header "Plugins/Platform/MacOSX/PlatformRemoteAppleWatch.h" export * }
+  module PlatformRemoteDarwinDevice { header "Plugins/Platform/MacOSX/PlatformRemoteDarwinDevice.h" export * }
+  module PlatformRemoteiOS { header "Plugins/Platform/MacOSX/PlatformRemoteiOS.h" export * }
+}
+module lldb_src_PluginsPlatformNetBSD {
+  module PlatformNetBSD { header "Plugins/Platform/NetBSD/PlatformNetBSD.h" export * }
+}
+module lldb_src_PluginsPlatformOpenBSD {
+  module PlatformOpenBSD { header "Plugins/Platform/OpenBSD/PlatformOpenBSD.h" export * }
+}
+module lldb_src_PluginsPlatformPOSIX {
+  module PlatformPOSIX { header "Plugins/Platform/POSIX/PlatformPOSIX.h" export * }
+}
+module lldb_src_PluginsPlatformWindows {
+  module PlatformWindows { header "Plugins/Platform/Windows/PlatformWindows.h" export * }
+}
+module lldb_src_PluginsProcessDarwin {
+  module CFBundle { header "Plugins/Process/Darwin/CFBundle.h" export * }
+  module CFString { header "Plugins/Process/Darwin/CFString.h" export * }
+  module CFUtils { header "Plugins/Process/Darwin/CFUtils.h" export * }
+  module DarwinProcessLauncher { header "Plugins/Process/Darwin/DarwinProcessLauncher.h" export * }
+  module LaunchFlavor { header "Plugins/Process/Darwin/LaunchFlavor.h" export * }
+  module MachException { header "Plugins/Process/Darwin/MachException.h" export * }
+  module NativeProcessDarwin { header "Plugins/Process/Darwin/NativeProcessDarwin.h" export * }
+  module NativeThreadDarwin { header "Plugins/Process/Darwin/NativeThreadDarwin.h" export * }
+  module NativeThreadListDarwin { header "Plugins/Process/Darwin/NativeThreadListDarwin.h" export * }
+}
+module lldb_src_PluginsProcesselfcore {
+  module ProcessElfCore { header "Plugins/Process/elf-core/ProcessElfCore.h" export * }
+  module RegisterContextPOSIXCore_arm64 { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_arm64.h" export * }
+  module RegisterContextPOSIXCore_arm { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_arm.h" export * }
+  module RegisterContextPOSIXCore_mips64 { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_mips64.h" export * }
+  module RegisterContextPOSIXCore_powerpc { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_powerpc.h" export * }
+  module RegisterContextPOSIXCore_ppc64le { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_ppc64le.h" export * }
+  module RegisterContextPOSIXCore_s390x { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_s390x.h" export * }
+  module RegisterContextPOSIXCore_x86_64 { header "Plugins/Process/elf-core/RegisterContextPOSIXCore_x86_64.h" export * }
+  module RegisterUtilities { header "Plugins/Process/elf-core/RegisterUtilities.h" export * }
+  module ThreadElfCore { header "Plugins/Process/elf-core/ThreadElfCore.h" export * }
+}
+module lldb_src_PluginsProcessFreeBSD {
+  module FreeBSDThread { header "Plugins/Process/FreeBSD/FreeBSDThread.h" export * }
+  module POSIXStopInfo { header "Plugins/Process/FreeBSD/POSIXStopInfo.h" export * }
+  module ProcessFreeBSD { header "Plugins/Process/FreeBSD/ProcessFreeBSD.h" export * }
+  module ProcessMonitor { header "Plugins/Process/FreeBSD/ProcessMonitor.h" export * }
+  module RegisterContextPOSIX { header "Plugins/Process/FreeBSD/RegisterContextPOSIX.h" export * }
+  module RegisterContextPOSIXProcessMonitor_arm64 { header "Plugins/Process/FreeBSD/RegisterContextPOSIXProcessMonitor_arm64.h" export * }
+  module RegisterContextPOSIXProcessMonitor_arm { header "Plugins/Process/FreeBSD/RegisterContextPOSIXProcessMonitor_arm.h" export * }
+  module RegisterContextPOSIXProcessMonitor_mips64 { header "Plugins/Process/FreeBSD/RegisterContextPOSIXProcessMonitor_mips64.h" export * }
+  module RegisterContextPOSIXProcessMonitor_powerpc { header "Plugins/Process/FreeBSD/RegisterContextPOSIXProcessMonitor_powerpc.h" export * }
+  module RegisterContextPOSIXProcessMonitor_x86 { header "Plugins/Process/FreeBSD/RegisterContextPOSIXProcessMonitor_x86.h" export * }
+}
+module lldb_src_PluginsProcessgdbremote {
+  module GDBRemoteClientBase { header "Plugins/Process/gdb-remote/GDBRemoteClientBase.h" export * }
+  module GDBRemoteCommunicationClient { header "Plugins/Process/gdb-remote/GDBRemoteCommunicationClient.h" export * }
+  module GDBRemoteCommunication { header "Plugins/Process/gdb-remote/GDBRemoteCommunication.h" export * }
+  module GDBRemoteCommunicationServerCommon { header "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerCommon.h" export * }
+  module GDBRemoteCommunicationServer { header "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h" export * }
+  module GDBRemoteCommunicationServerLLGS { header "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerLLGS.h" export * }
+  module GDBRemoteCommunicationServerPlatform { header "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerPlatform.h" export * }
+  module GDBRemoteRegisterContext { header "Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h" export * }
+  module ProcessGDBRemote { header "Plugins/Process/gdb-remote/ProcessGDBRemote.h" export * }
+  module ProcessGDBRemoteLog { header "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h" export * }
+  module ThreadGDBRemote { header "Plugins/Process/gdb-remote/ThreadGDBRemote.h" export * }
+}
+module lldb_src_PluginsProcessLinux {
+  module NativeProcessLinux { header "Plugins/Process/Linux/NativeProcessLinux.h" export * }
+  module NativeRegisterContextLinux_arm64 { header "Plugins/Process/Linux/NativeRegisterContextLinux_arm64.h" export * }
+  module NativeRegisterContextLinux_arm { header "Plugins/Process/Linux/NativeRegisterContextLinux_arm.h" export * }
+  module NativeRegisterContextLinux { header "Plugins/Process/Linux/NativeRegisterContextLinux.h" export * }
+  module NativeRegisterContextLinux_mips64 { header "Plugins/Process/Linux/NativeRegisterContextLinux_mips64.h" export * }
+  module NativeRegisterContextLinux_ppc64le { header "Plugins/Process/Linux/NativeRegisterContextLinux_ppc64le.h" export * }
+  module NativeRegisterContextLinux_s390x { header "Plugins/Process/Linux/NativeRegisterContextLinux_s390x.h" export * }
+  module NativeRegisterContextLinux_x86_64 { header "Plugins/Process/Linux/NativeRegisterContextLinux_x86_64.h" export * }
+  module NativeThreadLinux { header "Plugins/Process/Linux/NativeThreadLinux.h" export * }
+  module ProcessorTrace { header "Plugins/Process/Linux/ProcessorTrace.h" export * }
+  module Procfs { header "Plugins/Process/Linux/Procfs.h" export * }
+  module SingleStepCheck { header "Plugins/Process/Linux/SingleStepCheck.h" export * }
+}
+module lldb_src_PluginsProcessmachcore {
+  module ProcessMachCore { header "Plugins/Process/mach-core/ProcessMachCore.h" export * }
+  module ThreadMachCore { header "Plugins/Process/mach-core/ThreadMachCore.h" export * }
+}
+module lldb_src_PluginsProcessMacOSXKernel {
+  module CommunicationKDP { header "Plugins/Process/MacOSX-Kernel/CommunicationKDP.h" export * }
+  module ProcessKDP { header "Plugins/Process/MacOSX-Kernel/ProcessKDP.h" export * }
+  module ProcessKDPLog { header "Plugins/Process/MacOSX-Kernel/ProcessKDPLog.h" export * }
+  module RegisterContextKDP_arm64 { header "Plugins/Process/MacOSX-Kernel/RegisterContextKDP_arm64.h" export * }
+  module RegisterContextKDP_arm { header "Plugins/Process/MacOSX-Kernel/RegisterContextKDP_arm.h" export * }
+  module RegisterContextKDP_i386 { header "Plugins/Process/MacOSX-Kernel/RegisterContextKDP_i386.h" export * }
+  module RegisterContextKDP_x86_64 { header "Plugins/Process/MacOSX-Kernel/RegisterContextKDP_x86_64.h" export * }
+  module ThreadKDP { header "Plugins/Process/MacOSX-Kernel/ThreadKDP.h" export * }
+}
+module lldb_src_PluginsProcessminidump {
+  module MinidumpParser { header "Plugins/Process/minidump/MinidumpParser.h" export * }
+  module MinidumpTypes { header "Plugins/Process/minidump/MinidumpTypes.h" export * }
+  module NtStructures { header "Plugins/Process/minidump/NtStructures.h" export * }
+  module ProcessMinidump { header "Plugins/Process/minidump/ProcessMinidump.h" export * }
+  module RegisterContextMinidump_x86_32 { header "Plugins/Process/minidump/RegisterContextMinidump_x86_32.h" export * }
+  module RegisterContextMinidump_x86_64 { header "Plugins/Process/minidump/RegisterContextMinidump_x86_64.h" export * }
+  module ThreadMinidump { header "Plugins/Process/minidump/ThreadMinidump.h" export * }
+}
+module lldb_src_PluginsProcessNetBSD {
+  module NativeProcessNetBSD { header "Plugins/Process/NetBSD/NativeProcessNetBSD.h" export * }
+  module NativeRegisterContextNetBSD { header "Plugins/Process/NetBSD/NativeRegisterContextNetBSD.h" export * }
+  module NativeRegisterContextNetBSD_x86_64 { header "Plugins/Process/NetBSD/NativeRegisterContextNetBSD_x86_64.h" export * }
+  module NativeThreadNetBSD { header "Plugins/Process/NetBSD/NativeThreadNetBSD.h" export * }
+}
+module lldb_src_PluginsProcessPOSIX {
+  module CrashReason { header "Plugins/Process/POSIX/CrashReason.h" export * }
+  module ProcessMessage { header "Plugins/Process/POSIX/ProcessMessage.h" export * }
+  module ProcessPOSIXLog { header "Plugins/Process/POSIX/ProcessPOSIXLog.h" export * }
+}
+module lldb_src_PluginsProcessUtility {
+  module ARMDefines { header "Plugins/Process/Utility/ARMDefines.h" export * }
+  module ARMUtils { header "Plugins/Process/Utility/ARMUtils.h" export * }
+  module DynamicRegisterInfo { header "Plugins/Process/Utility/DynamicRegisterInfo.h" export * }
+  module FreeBSDSignals { header "Plugins/Process/Utility/FreeBSDSignals.h" export * }
+  module GDBRemoteSignals { header "Plugins/Process/Utility/GDBRemoteSignals.h" export * }
+  module HistoryThread { header "Plugins/Process/Utility/HistoryThread.h" export * }
+  module HistoryUnwind { header "Plugins/Process/Utility/HistoryUnwind.h" export * }
+  module InferiorCallPOSIX { header "Plugins/Process/Utility/InferiorCallPOSIX.h" export * }
+  module InstructionUtils { header "Plugins/Process/Utility/InstructionUtils.h" export * }
+  module LinuxSignals { header "Plugins/Process/Utility/LinuxSignals.h" export * }
+  module lldb_arm64_register_enums { header "Plugins/Process/Utility/lldb-arm64-register-enums.h" export * }
+  module lldb_arm_register_enums { header "Plugins/Process/Utility/lldb-arm-register-enums.h" export * }
+  module lldb_mips_freebsd_register_enums { header "Plugins/Process/Utility/lldb-mips-freebsd-register-enums.h" export * }
+  module lldb_mips_linux_register_enums { header "Plugins/Process/Utility/lldb-mips-linux-register-enums.h" export * }
+  module lldb_ppc64le_register_enums { header "Plugins/Process/Utility/lldb-ppc64le-register-enums.h" export * }
+  module lldb_ppc64_register_enums { header "Plugins/Process/Utility/lldb-ppc64-register-enums.h" export * }
+  module lldb_s390x_register_enums { header "Plugins/Process/Utility/lldb-s390x-register-enums.h" export * }
+  module lldb_x86_register_enums { header "Plugins/Process/Utility/lldb-x86-register-enums.h" export * }
+  module MipsLinuxSignals { header "Plugins/Process/Utility/MipsLinuxSignals.h" export * }
+  module NativeRegisterContextRegisterInfo { header "Plugins/Process/Utility/NativeRegisterContextRegisterInfo.h" export * }
+  module NetBSDSignals { header "Plugins/Process/Utility/NetBSDSignals.h" export * }
+
+  textual header "Plugins/Process/Utility/RegisterContextDarwin_arm64.h"
+  textual header "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
+  textual header "Plugins/Process/Utility/RegisterContextDarwinConstants.h"
+  textual header "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
+  textual header "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextDummy.h"
+  textual header "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
+  textual header "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
+  textual header "Plugins/Process/Utility/RegisterContextFreeBSD_powerpc.h"
+  textual header "Plugins/Process/Utility/RegisterContextFreeBSD_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextHistory.h"
+  textual header "Plugins/Process/Utility/RegisterContextLinux_i386.h"
+  textual header "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
+  textual header "Plugins/Process/Utility/RegisterContextLinux_mips.h"
+  textual header "Plugins/Process/Utility/RegisterContextLinux_s390x.h"
+  textual header "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextLLDB.h"
+  textual header "Plugins/Process/Utility/RegisterContextMach_arm.h"
+  textual header "Plugins/Process/Utility/RegisterContextMach_i386.h"
+  textual header "Plugins/Process/Utility/RegisterContextMach_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextMacOSXFrameBackchain.h"
+  textual header "Plugins/Process/Utility/RegisterContextMemory.h"
+  textual header "Plugins/Process/Utility/RegisterContext_mips.h"
+  textual header "Plugins/Process/Utility/RegisterContextNetBSD_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextOpenBSD_i386.h"
+  textual header "Plugins/Process/Utility/RegisterContextOpenBSD_x86_64.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_arm64.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_arm.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_mips64.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_powerpc.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_ppc64le.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_s390x.h"
+  textual header "Plugins/Process/Utility/RegisterContextPOSIX_x86.h"
+  textual header "Plugins/Process/Utility/RegisterContext_powerpc.h"
+  textual header "Plugins/Process/Utility/RegisterContext_s390x.h"
+  textual header "Plugins/Process/Utility/RegisterContextThreadMemory.h"
+  textual header "Plugins/Process/Utility/RegisterContext_x86.h"
+  textual header "Plugins/Process/Utility/RegisterInfoInterface.h"
+  textual header "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
+  textual header "Plugins/Process/Utility/RegisterInfoPOSIX_arm.h"
+  textual header "Plugins/Process/Utility/RegisterInfoPOSIX_ppc64le.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_arm64.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_arm.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_i386.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_mips64.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_mips.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_powerpc.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_ppc64.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_ppc64le.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_s390x.h"
+  textual header "Plugins/Process/Utility/RegisterInfos_x86_64.h"
+
+  module StopInfoMachException { header "Plugins/Process/Utility/StopInfoMachException.h" export * }
+  module ThreadMemory { header "Plugins/Process/Utility/ThreadMemory.h" export * }
+  module UnwindLLDB { header "Plugins/Process/Utility/UnwindLLDB.h" export * }
+  module UnwindMacOSXFrameBackchain { header "Plugins/Process/Utility/UnwindMacOSXFrameBackchain.h" export * }
+}
+module lldb_src_PluginsProcessWindowsCommon {
+  module DebuggerThread { header "Plugins/Process/Windows/Common/DebuggerThread.h" export * }
+  module ExceptionRecord { header "Plugins/Process/Windows/Common/ExceptionRecord.h" export * }
+  module ForwardDecl { header "Plugins/Process/Windows/Common/ForwardDecl.h" export * }
+  module IDebugDelegate { header "Plugins/Process/Windows/Common/IDebugDelegate.h" export * }
+  module LocalDebugDelegate { header "Plugins/Process/Windows/Common/LocalDebugDelegate.h" export * }
+  module NtStructures { header "Plugins/Process/Windows/Common/NtStructures.h" export * }
+  module ProcessWindows { header "Plugins/Process/Windows/Common/ProcessWindows.h" export * }
+  module ProcessWindowsLog { header "Plugins/Process/Windows/Common/ProcessWindowsLog.h" export * }
+  module RegisterContextWindows { header "Plugins/Process/Windows/Common/RegisterContextWindows.h" export * }
+  module TargetThreadWindows { header "Plugins/Process/Windows/Common/TargetThreadWindows.h" export * }
+}
+module lldb_src_PluginsProcessWindowsCommonx64 {
+  module RegisterContextWindows_x64 { header "Plugins/Process/Windows/Common/x64/RegisterContextWindows_x64.h" export * }
+}
+module lldb_src_PluginsProcessWindowsCommonx86 {
+  module RegisterContextWindows_x86 { header "Plugins/Process/Windows/Common/x86/RegisterContextWindows_x86.h" export * }
+}
+module lldb_src_PluginsScriptInterpreterNone {
+  module ScriptInterpreterNone { header "Plugins/ScriptInterpreter/None/ScriptInterpreterNone.h" export * }
+}
+module lldb_src_PluginsScriptInterpreterPython {
+  module lldb_python { header "Plugins/ScriptInterpreter/Python/lldb-python.h" export * }
+  module PythonDataObjects { header "Plugins/ScriptInterpreter/Python/PythonDataObjects.h" export * }
+  module PythonExceptionState { header "Plugins/ScriptInterpreter/Python/PythonExceptionState.h" export * }
+  module ScriptInterpreterPython { header "Plugins/ScriptInterpreter/Python/ScriptInterpreterPython.h" export * }
+}
+module lldb_src_PluginsStructuredDataDarwinLog {
+  module StructuredDataDarwinLog { header "Plugins/StructuredData/DarwinLog/StructuredDataDarwinLog.h" export * }
+}
+module lldb_src_PluginsSymbolFileDWARF {
+  module AppleDWARFIndex { header "Plugins/SymbolFile/DWARF/AppleDWARFIndex.h" export * }
+  module DIERef { header "Plugins/SymbolFile/DWARF/DIERef.h" export * }
+  module DWARFAbbreviationDeclaration { header "Plugins/SymbolFile/DWARF/DWARFAbbreviationDeclaration.h" export * }
+  module DWARFASTParserClang { header "Plugins/SymbolFile/DWARF/DWARFASTParserClang.h" export * }
+  module DWARFASTParserGo { header "Plugins/SymbolFile/DWARF/DWARFASTParserGo.h" export * }
+  module DWARFASTParser { header "Plugins/SymbolFile/DWARF/DWARFASTParser.h" export * }
+  module DWARFASTParserJava { header "Plugins/SymbolFile/DWARF/DWARFASTParserJava.h" export * }
+  module DWARFASTParserOCaml { header "Plugins/SymbolFile/DWARF/DWARFASTParserOCaml.h" export * }
+  module DWARFAttribute { header "Plugins/SymbolFile/DWARF/DWARFAttribute.h" export * }
+  module DWARFCompileUnit { header "Plugins/SymbolFile/DWARF/DWARFCompileUnit.h" export * }
+  module DWARFDataExtractor { header "Plugins/SymbolFile/DWARF/DWARFDataExtractor.h" export * }
+  module DWARFDebugAbbrev { header "Plugins/SymbolFile/DWARF/DWARFDebugAbbrev.h" export * }
+  module DWARFDebugArangeSet { header "Plugins/SymbolFile/DWARF/DWARFDebugArangeSet.h" export * }
+  module DWARFDebugAranges { header "Plugins/SymbolFile/DWARF/DWARFDebugAranges.h" export * }
+  module DWARFDebugInfoEntry { header "Plugins/SymbolFile/DWARF/DWARFDebugInfoEntry.h" export * }
+  module DWARFDebugInfo { header "Plugins/SymbolFile/DWARF/DWARFDebugInfo.h" export * }
+  module DWARFDebugLine { header "Plugins/SymbolFile/DWARF/DWARFDebugLine.h" export * }
+  module DWARFDebugMacinfoEntry { header "Plugins/SymbolFile/DWARF/DWARFDebugMacinfoEntry.h" export * }
+  module DWARFDebugMacinfo { header "Plugins/SymbolFile/DWARF/DWARFDebugMacinfo.h" export * }
+  module DWARFDebugMacro { header "Plugins/SymbolFile/DWARF/DWARFDebugMacro.h" export * }
+  module DWARFDebugRanges { header "Plugins/SymbolFile/DWARF/DWARFDebugRanges.h" export * }
+  module DWARFDeclContext { header "Plugins/SymbolFile/DWARF/DWARFDeclContext.h" export * }
+  module DWARFDefines { header "Plugins/SymbolFile/DWARF/DWARFDefines.h" export * }
+  module DWARFDIECollection { header "Plugins/SymbolFile/DWARF/DWARFDIECollection.h" export * }
+  module DWARFDIE { header "Plugins/SymbolFile/DWARF/DWARFDIE.h" export * }
+  module DWARFFormValue { header "Plugins/SymbolFile/DWARF/DWARFFormValue.h" export * }
+  module DWARFIndex { header "Plugins/SymbolFile/DWARF/DWARFIndex.h" export * }
+  module DWARFUnit { header "Plugins/SymbolFile/DWARF/DWARFUnit.h" export * }
+  module HashedNameToDIE { header "Plugins/SymbolFile/DWARF/HashedNameToDIE.h" export * }
+  module LogChannelDWARF { header "Plugins/SymbolFile/DWARF/LogChannelDWARF.h" export * }
+  module ManualDWARFIndex { header "Plugins/SymbolFile/DWARF/ManualDWARFIndex.h" export * }
+  module NameToDIE { header "Plugins/SymbolFile/DWARF/NameToDIE.h" export * }
+  module SymbolFileDWARFDebugMap { header "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h" export * }
+  module SymbolFileDWARFDwoDwp { header "Plugins/SymbolFile/DWARF/SymbolFileDWARFDwoDwp.h" export * }
+  module SymbolFileDWARFDwo { header "Plugins/SymbolFile/DWARF/SymbolFileDWARFDwo.h" export * }
+  module SymbolFileDWARFDwp { header "Plugins/SymbolFile/DWARF/SymbolFileDWARFDwp.h" export * }
+  module SymbolFileDWARF { header "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h" export * }
+  module UniqueDWARFASTType { header "Plugins/SymbolFile/DWARF/UniqueDWARFASTType.h" export * }
+}
+module lldb_src_PluginsSymbolFilePDB {
+  module PDBASTParser { header "Plugins/SymbolFile/PDB/PDBASTParser.h" export * }
+  module SymbolFilePDB { header "Plugins/SymbolFile/PDB/SymbolFilePDB.h" export * }
+}
+module lldb_src_PluginsSymbolFileSymtab {
+  module SymbolFileSymtab { header "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h" export * }
+}
+module lldb_src_PluginsSymbolVendorELF {
+  module SymbolVendorELF { header "Plugins/SymbolVendor/ELF/SymbolVendorELF.h" export * }
+}
+module lldb_src_PluginsSymbolVendorMacOSX {
+  module SymbolVendorMacOSX { header "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h" export * }
+}
+module lldb_src_PluginsSystemRuntimeMacOSX {
+  module AppleGetItemInfoHandler { header "Plugins/SystemRuntime/MacOSX/AppleGetItemInfoHandler.h" export * }
+  module AppleGetPendingItemsHandler { header "Plugins/SystemRuntime/MacOSX/AppleGetPendingItemsHandler.h" export * }
+  module AppleGetQueuesHandler { header "Plugins/SystemRuntime/MacOSX/AppleGetQueuesHandler.h" export * }
+  module AppleGetThreadItemInfoHandler { header "Plugins/SystemRuntime/MacOSX/AppleGetThreadItemInfoHandler.h" export * }
+  module SystemRuntimeMacOSX { header "Plugins/SystemRuntime/MacOSX/SystemRuntimeMacOSX.h" export * }
+}
+module lldb_src_PluginsUnwindAssemblyInstEmulation {
+  module UnwindAssemblyInstEmulation { header "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h" export * }
+}
+module lldb_src_PluginsUnwindAssemblyx86 {
+  module UnwindAssembly_x86 { header "Plugins/UnwindAssembly/x86/UnwindAssembly-x86.h" export * }
+  module x86AssemblyInspectionEngine { header "Plugins/UnwindAssembly/x86/x86AssemblyInspectionEngine.h" export * }
+}
+module lldb_src_Utility {
+  module ARM64_DWARF_Registers { header "Utility/ARM64_DWARF_Registers.h" export * }
+  module ARM64_ehframe_Registers { header "Utility/ARM64_ehframe_Registers.h" export * }
+  module ARM_DWARF_Registers { header "Utility/ARM_DWARF_Registers.h" export * }
+  module ARM_ehframe_Registers { header "Utility/ARM_ehframe_Registers.h" export * }
+  module PPC64_DWARF_Registers { header "Utility/PPC64_DWARF_Registers.h" export * }
+  module PPC64LE_DWARF_Registers { header "Utility/PPC64LE_DWARF_Registers.h" export * }
+  module PPC64LE_ehframe_Registers { header "Utility/PPC64LE_ehframe_Registers.h" export * }
+  module UuidCompatibility { header "Utility/UuidCompatibility.h" export * }
+}
