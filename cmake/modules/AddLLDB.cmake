@@ -81,6 +81,23 @@ function(add_lldb_library name)
   # Add in any extra C++ compilation flags for this library.
   target_compile_options(${name} PRIVATE ${PARAM_EXTRA_CXXFLAGS})
 
+  # Obj-C++ files should not inherit the -fmodules and -fcxx-modules flags.
+  # Otherwise we start building Obj-C++ modules of all LLVM/Clang modules
+  # which is slow (and often doesn't work as not all LLVM/Clang code is
+  # compatible with Obj-C++).
+  foreach(src ${srcs})
+    if (${src} MATCHES ".*\\.mm$")
+      # Check if someone already added compilation flags to the .mm file
+      # and in this case only append our -fno-modules/-fno-cxx-modules flags.
+      get_source_file_property(prop ${src} COMPILE_FLAGS)
+      if("${prop}" STREQUAL NOTFOUND)
+        set(prop "")
+      endif()
+      set(prop "${prop} -fno-modules -fno-cxx-modules")
+      set_source_files_properties(${src} PROPERTIES COMPILE_FLAGS "${prop}")
+    endif()
+  endforeach()
+
   set_target_properties(${name} PROPERTIES FOLDER "lldb libraries")
 endfunction(add_lldb_library)
 
