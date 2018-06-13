@@ -307,13 +307,24 @@ CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
 
+int CommandObjectExpression::HandleCompletion(Args &input,
+                                              int &cursor_index,
+                                              int &cursor_char_position,
+                                              int match_start_point,
+                                              int max_return_elements,
+                                              bool &word_complete,
+                                              StringList &matches) {
+    matches.AppendString("Works!");
+    return 1;
+}
+
 static lldb_private::Status
 CanBeUsedForElementCountPrinting(ValueObject &valobj) {
-  CompilerType type(valobj.GetCompilerType());
-  CompilerType pointee;
-  if (!type.IsPointerType(&pointee))
-    return Status("as it does not refer to a pointer");
-  if (pointee.IsVoidType())
+    CompilerType type(valobj.GetCompilerType());
+    CompilerType pointee;
+    if (!type.IsPointerType(&pointee))
+        return Status("as it does not refer to a pointer");
+    if (pointee.IsVoidType())
     return Status("as it refers to a pointer to void");
   return Status();
 }
