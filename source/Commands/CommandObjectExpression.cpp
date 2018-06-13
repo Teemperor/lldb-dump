@@ -21,6 +21,7 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Expression/DWARFExpression.h"
+#include "lldb/Expression/DiagnosticManager.h"
 #include "lldb/Expression/REPL.h"
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Host/Host.h"
@@ -306,6 +307,126 @@ Examples:
 CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
+
+//------------------------------------------------------------------
+/// Converts a position given by the completion API (word position and character
+/// position in the indexed word) to an absolute character position in the
+/// argument string.
+///
+/// @param[in] cmd
+///     The argument string.
+/// @param[in] word_pos
+///     The position of the selected word.
+/// @param[in] char_pos
+///     The character position inside the selected word.
+///
+/// @return
+///     The absolute position inside the argument string.
+///
+/// @example
+///     WordPosToAbsolutePos("ab cd", 1, 1) == 4 (points to the 'd')s
+static int WordPosToAbsolutePos(llvm::StringRef cmd, int word_pos,
+                                const int char_pos) {
+  int result = 0;
+
+  // Skip any leading whitespace.
+  while (!cmd.empty() && cmd.front() == ' ') {
+    cmd = cmd.drop_front();
+    ++result;
+  }
+
+  // If we have to search for a specific word, we iterate over the string until
+  // we find the word.
+  if (word_pos != 0) {
+    // Track if the last char was a whitepace.
+    bool last_was_whitespace = false;
+    int words_left = word_pos;
+
+    while (!cmd.empty()) {
+      const char c = cmd.front();
+      cmd = cmd.drop_front();
+      // We have to keep track of whitespace to make see how many words we have
+      // iterated over so far.
+      if (c == ' ')
+        last_was_whitespace = true;
+      else if (last_was_whitespace) {
+        // We just left a whitespace part and entered a word, so we let's
+        // decrease our counter to keep track of where we are.
+        words_left--;
+        // We found the selected word.
+        if (words_left == 0)
+          break;
+        last_was_whitespace = false;
+      }
+      ++result;
+    }
+  }
+  // result now points to the start of the selected word, so we can just add the
+  // char_pos to get the final absolute position.
+  return result + char_pos;
+}
+
+int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
+                                              int &cursor_char_position,
+                                              int match_start_point,
+                                              int max_return_elements,
+                                              bool &word_complete,
+                                              StringList &matches) {
+  // Don't use m_exe_ctx as this might be called asynchronously after the
+  // command object DoExecute has finished when doing multi-line expression
+  // that use an input reader...
+  ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+
+  Target *target = exe_ctx.GetTargetPtr();
+
+  EvaluateExpressionOptions options;
+  options.SetCoerceToId(m_varobj_options.use_objc);
+  options.SetLanguage(m_command_options.language);
+  options.SetExecutionPolicy(lldb_private::eExecutionPolicyNever);
+  options.SetAutoApplyFixIts(false);
+  options.SetGenerateDebugInfo(false);
+
+  if (!target)
+    target = GetDummyTarget();
+
+  if (target) {
+    std::string arg;
+    input.GetCommandString(arg);
+
+    // We need a valid execution context with a frame pointer for this
+    // completion, so if we don't have one we should try to make a valid
+    // execution context.
+    if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
+      m_interpreter.UpdateExecutionContext(nullptr);
+
+    // This didn't work, so let's get out before we start doing things that
+    // expect a valid frame pointer.
+    if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
+      return 0;
+
+    // Like in the `Parse` method, we should create our own execution context.
+    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+
+    auto language = exe_ctx.GetFrameRef().GetLanguage();
+
+    Status error;
+    lldb::UserExpressionSP expr(target->GetUserExpressionForLanguage(
+        arg, llvm::StringRef(), language, UserExpression::eResultTypeAny,
+        options, error));
+    if (error.Fail())
+      return 0;
+
+    // We got the index of the arg and the cursor index inside that arg as
+    // parameters, but for completing the whole expression we need to revert
+    // this back to the absolute offset of the cursor in the whole expression.
+    int absolute_pos =
+        WordPosToAbsolutePos(arg, cursor_index, cursor_char_position);
+    expr->Complete(exe_ctx, matches, absolute_pos);
+    return matches.GetSize();
+  }
+
+  return 0;
+}
 
 static lldb_private::Status
 CanBeUsedForElementCountPrinting(ValueObject &valobj) {
