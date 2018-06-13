@@ -98,6 +98,10 @@ public:
                      lldb_private::ExecutionPolicy execution_policy,
                      bool keep_result_in_memory, bool generate_debug_info) = 0;
 
+  virtual bool Complete(ExecutionContext &exe_ctx, StringList &matches) {
+    return false;
+  }
+
   virtual bool CanInterpret() = 0;
 
   bool MatchesContext(ExecutionContext &exe_ctx);

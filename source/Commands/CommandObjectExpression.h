@@ -62,6 +62,11 @@ public:
 
   Options *GetOptions() override;
 
+  int HandleCompletion(Args &input, int &cursor_index,
+                       int &cursor_char_position, int match_start_point,
+                       int max_return_elements, bool &word_complete,
+                       StringList &matches) override;
+
 protected:
   //------------------------------------------------------------------
   // IOHandler::Delegate functions

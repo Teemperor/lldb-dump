@@ -35,6 +35,7 @@
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "clang/Sema/SemaConsumer.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
@@ -544,7 +545,74 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
 
 ClangExpressionParser::~ClangExpressionParser() {}
 
+namespace {
+  class CodeComplete : public CodeCompleteConsumer {
+    CodeCompletionTUInfo CCTUInfo;
+
+  public:
+    CodeComplete() : CodeCompleteConsumer(CodeCompleteOptions(), false),
+      CCTUInfo(std::make_shared<GlobalCodeCompletionAllocator>()) {}
+
+    /// Deregisters and destroys this code-completion consumer.
+    virtual ~CodeComplete() {}
+
+    /// \name Code-completion filtering
+    /// Check if the result should be filtered out.
+    bool isResultFilteredOut(StringRef Filter,
+                                     CodeCompletionResult Results) override {
+      abort();
+      llvm::errs() << "WOOOP\n";
+      return false;
+    }
+
+    /// \name Code-completion callbacks
+    //@{
+    /// Process the finalized code-completion results.
+    void ProcessCodeCompleteResults(Sema &S,
+                                            CodeCompletionContext Context,
+                                            CodeCompletionResult *Results,
+                                            unsigned NumResults) override {
+      llvm::errs() << "WOOOP\n";
+      abort();
+    }
+
+    /// \param S the semantic-analyzer object for which code-completion is being
+    /// done.
+    ///
+    /// \param CurrentArg the index of the current argument.
+    ///
+    /// \param Candidates an array of overload candidates.
+    ///
+    /// \param NumCandidates the number of overload candidates
+    void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
+                                           OverloadCandidate *Candidates,
+                                           unsigned NumCandidates) override {
+      abort();
+      llvm::errs() << "WOOOP\n";
+
+    }
+
+    CodeCompletionAllocator &getAllocator() override {
+      return CCTUInfo.getAllocator();
+    }
+
+    CodeCompletionTUInfo &getCodeCompletionTUInfo() override { return CCTUInfo; }
+  };
+}
+
+bool ClangExpressionParser::Complete(StringList &matches) {
+  DiagnosticManager mgr;
+  CodeComplete CC;
+  ParseInternal(mgr, &CC);
+  return true;
+}
+
 unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
+  return ParseInternal(diagnostic_manager);
+}
+
+unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_manager,
+                                              CodeCompleteConsumer *completion_consumer) {
   ClangDiagnosticManagerAdapter *adapter =
       static_cast<ClangDiagnosticManagerAdapter *>(
           m_compiler->getDiagnostics().getClient());
@@ -606,11 +674,13 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
   if (ast_transformer) {
     ast_transformer->Initialize(m_compiler->getASTContext());
     ParseAST(m_compiler->getPreprocessor(), ast_transformer,
-             m_compiler->getASTContext());
+             m_compiler->getASTContext(), false, TU_Complete,
+             completion_consumer);
   } else {
     m_code_generator->Initialize(m_compiler->getASTContext());
     ParseAST(m_compiler->getPreprocessor(), m_code_generator.get(),
-             m_compiler->getASTContext());
+             m_compiler->getASTContext(), false, TU_Complete,
+             completion_consumer);
   }
 
   diag_buf->EndSourceFile();

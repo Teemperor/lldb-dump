@@ -20,6 +20,10 @@
 #include <string>
 #include <vector>
 
+namespace clang {
+  class CodeCompleteConsumer;
+}
+
 namespace lldb_private {
 
 class IRExecutionUnit;
@@ -58,6 +62,8 @@ public:
   //------------------------------------------------------------------
   ~ClangExpressionParser() override;
 
+  bool Complete(StringList &matches) override;
+
   //------------------------------------------------------------------
   /// Parse a single expression and convert it to IR using Clang.  Don't wrap
   /// the expression in anything at all.
@@ -70,6 +76,9 @@ public:
   ///     success.
   //------------------------------------------------------------------
   unsigned Parse(DiagnosticManager &diagnostic_manager) override;
+
+  unsigned ParseInternal(DiagnosticManager &diagnostic_manager,
+                         clang::CodeCompleteConsumer *completion_consumer = nullptr);
 
   bool RewriteExpression(DiagnosticManager &diagnostic_manager) override;
 

@@ -49,6 +49,8 @@ public:
   //------------------------------------------------------------------
   virtual ~ExpressionParser(){};
 
+  virtual bool Complete(StringList &matches) = 0;
+
   //------------------------------------------------------------------
   /// Parse a single expression and convert it to IR using Clang.  Don't wrap
   /// the expression in anything at all.

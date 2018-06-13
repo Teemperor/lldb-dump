@@ -591,6 +591,22 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
+bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches) {
+  Process *process = exe_ctx.GetProcessPtr();
+  ExecutionContextScope *exe_scope = process;
+
+  if (!exe_scope)
+    exe_scope = exe_ctx.GetTargetPtr();
+
+  // We use a shared pointer here so we can use the original parser - if it
+  // succeeds or the rewrite parser we might make if it fails.  But the
+  // parser_sp will never be empty.
+  ClangExpressionParser parser(exe_scope, *this, false);
+
+  parser.Complete(matches);
+  return true;
+}
+
 bool ClangUserExpression::AddArguments(ExecutionContext &exe_ctx,
                                        std::vector<lldb::addr_t> &args,
                                        lldb::addr_t struct_address,

@@ -23,6 +23,7 @@
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Expression/REPL.h"
 #include "lldb/Expression/UserExpression.h"
+#include "lldb/Expression/DiagnosticManager.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -306,6 +307,80 @@ Examples:
 CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
+
+int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
+                                              int &cursor_char_position,
+                                              int match_start_point,
+                                              int max_return_elements,
+                                              bool &word_complete,
+                                              StringList &matches) {
+  // Don't use m_exe_ctx as this might be called asynchronously after the
+  // command object DoExecute has finished when doing multi-line expression
+  // that use an input reader...
+  ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+
+  Target *target = exe_ctx.GetTargetPtr();
+
+
+  EvaluateExpressionOptions options;
+  options.SetCoerceToId(m_varobj_options.use_objc);
+  options.SetUnwindOnError(m_command_options.unwind_on_error);
+  options.SetIgnoreBreakpoints(m_command_options.ignore_breakpoints);
+  options.SetKeepInMemory(false); // TODO
+  options.SetUseDynamic(m_varobj_options.use_dynamic);
+  options.SetTryAllThreads(m_command_options.try_all_threads);
+  options.SetDebug(m_command_options.debug);
+  options.SetLanguage(m_command_options.language);
+  options.SetExecutionPolicy(
+      m_command_options.allow_jit
+          ? EvaluateExpressionOptions::default_execution_policy
+          : lldb_private::eExecutionPolicyNever);
+
+  bool auto_apply_fixits;
+  if (m_command_options.auto_apply_fixits == eLazyBoolCalculate)
+    auto_apply_fixits = target->GetEnableAutoApplyFixIts();
+  else
+    auto_apply_fixits =
+        m_command_options.auto_apply_fixits == eLazyBoolYes ? true : false;
+
+  options.SetAutoApplyFixIts(auto_apply_fixits);
+
+  if (m_command_options.top_level)
+    options.SetExecutionPolicy(eExecutionPolicyTopLevel);
+
+  // If there is any chance we are going to stop and want to see what went
+  // wrong with our expression, we should generate debug info
+  if (!m_command_options.ignore_breakpoints ||
+      !m_command_options.unwind_on_error)
+    options.SetGenerateDebugInfo(true);
+
+  if (m_command_options.timeout > 0)
+    options.SetTimeout(std::chrono::microseconds(m_command_options.timeout));
+  else
+    options.SetTimeout(llvm::None);
+
+  if (!target)
+    target = GetDummyTarget();
+
+  if (target) {
+    std::string arg;
+    input.GetCommandString(arg);
+
+    Status error;
+    lldb::UserExpressionSP expr(
+        target->GetUserExpressionForLanguage(arg.c_str(), "Prefix",
+        eLanguageTypeC_plus_plus_11, UserExpression::eResultTypeAny,
+                                             options, error));
+
+    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+    expr->Complete(exe_ctx, matches);
+    return matches.GetSize();
+
+  } else {
+    llvm::errs() << "NO TARGET :(\n";
+    return 0;
+  }
+}
 
 static lldb_private::Status
 CanBeUsedForElementCountPrinting(ValueObject &valobj) {
