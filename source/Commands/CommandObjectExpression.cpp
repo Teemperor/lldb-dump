@@ -331,8 +331,10 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
   options.SetTryAllThreads(m_command_options.try_all_threads);
   options.SetDebug(m_command_options.debug);
   options.SetLanguage(m_command_options.language);
-  // Needed that Text() returns the m_transformed_text later... (???)
-  options.SetExecutionPolicy(lldb_private::eExecutionPolicyTopLevel);
+  options.SetExecutionPolicy(
+      m_command_options.allow_jit
+          ? EvaluateExpressionOptions::default_execution_policy
+          : lldb_private::eExecutionPolicyNever);
 
   bool auto_apply_fixits;
   if (m_command_options.auto_apply_fixits == eLazyBoolCalculate)
@@ -343,6 +345,7 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
 
   options.SetAutoApplyFixIts(auto_apply_fixits);
 
+  // Uncomment to make it work again normally... TODO: Remove
   if (m_command_options.top_level)
     options.SetExecutionPolicy(eExecutionPolicyTopLevel);
 
@@ -364,16 +367,16 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
     std::string arg;
     input.GetCommandString(arg);
 
+    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+
     Status error;
     lldb::UserExpressionSP expr(
-        target->GetUserExpressionForLanguage(arg.c_str(), "Prefix",
+        target->GetUserExpressionForLanguage(arg.c_str(), "",
         eLanguageTypeC_plus_plus_11, UserExpression::eResultTypeAny,
                                              options, error));
 
-    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-    expr->Complete(exe_ctx, matches);
+    expr->Complete(exe_ctx, matches, arg.size());
     return matches.GetSize();
-
   } else {
     llvm::errs() << "NO TARGET :(\n";
     return 0;

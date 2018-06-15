@@ -591,7 +591,7 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
-bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches) {
+bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches, unsigned complete_pos) {
   DiagnosticManager diagnostic_manager;
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
 
@@ -685,6 +685,27 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
     }
   }
 
+  unsigned complete_line = 1;
+  unsigned complete_column_offset = 0;
+
+  bool found = false;
+  std::string Needle = "/*LLDB_EXPR*/";
+  for (std::size_t i = 0; i < m_transformed_text.size(); ++i) {
+    std::string Future = m_transformed_text.substr(i > 10 ? i - 10 : 0, Needle.size() + 30);
+    std::string Lookahead = m_transformed_text.substr(i, Needle.size());
+    if (Lookahead == Needle) {
+      complete_column_offset += Needle.size();
+      found = true;
+      break;
+    }
+    if (m_transformed_text[i] == '\n') {
+      ++complete_line;
+      complete_column_offset = 0;
+    } else
+      ++complete_column_offset;
+  }
+  assert(found && "Couldn't find our code completion needle?");
+
   if (log)
     log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
 
@@ -748,7 +769,7 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
 
   ClangExpressionParser parser(exe_scope, *this, false);
 
-  unsigned num_errors = parser.Complete(matches);
+  parser.Complete(matches, complete_line, complete_pos + complete_column_offset, complete_pos);
 
   return true;
 }

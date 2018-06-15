@@ -1859,6 +1859,8 @@ void AppleObjCRuntimeV2::WarnIfNoClassesCached(
 
   Debugger &debugger(GetProcess()->GetTarget().GetDebugger());
   if (auto stream = debugger.GetAsyncOutputStream()) {
+    return; // The code above is getting lldb stuck. Just disables it as we
+    // anwyay don't need to print stuff for completion.
     switch (reason) {
     case SharedCacheWarningReason::eNotEnoughClassesRead:
       stream->PutCString("warning: could not find Objective-C class data in "

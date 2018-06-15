@@ -62,7 +62,7 @@ public:
   //------------------------------------------------------------------
   ~ClangExpressionParser() override;
 
-  bool Complete(StringList &matches) override;
+  bool Complete(StringList &matches, unsigned line, unsigned pos, unsigned typed_pos) override;
 
   //------------------------------------------------------------------
   /// Parse a single expression and convert it to IR using Clang.  Don't wrap
@@ -78,7 +78,8 @@ public:
   unsigned Parse(DiagnosticManager &diagnostic_manager) override;
 
   unsigned ParseInternal(DiagnosticManager &diagnostic_manager,
-                         clang::CodeCompleteConsumer *completion_consumer = nullptr);
+                         clang::CodeCompleteConsumer *completion_consumer = nullptr, unsigned completion_line = 0,
+                         unsigned completion_pos = 0);
 
   bool RewriteExpression(DiagnosticManager &diagnostic_manager) override;
 

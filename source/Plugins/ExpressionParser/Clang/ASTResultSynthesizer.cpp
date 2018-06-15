@@ -88,7 +88,8 @@ void ASTResultSynthesizer::TransformTopLevelDecl(Decl *D) {
       }
     } else if (FunctionDecl *function_decl = dyn_cast<FunctionDecl>(D)) {
       if (m_ast_context &&
-          !function_decl->getNameInfo().getAsString().compare("$__lldb_expr")) {
+          !function_decl->getNameInfo().getAsString().compare("$__lldb_expr")
+          && function_decl->hasBody() /* when completing this may be nullptr */) {
         RecordPersistentTypes(function_decl);
         SynthesizeFunctionResult(function_decl);
       }

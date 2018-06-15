@@ -46,10 +46,14 @@ public:
                                     lldb::LanguageType wrapping_language,
                                     size_t &start_loc, size_t &end_loc);
 
+  unsigned OffsetLine = 0;
+  unsigned OffsetColumn = 0;
 private:
   ExpressionSourceCode(const char *name, const char *prefix, const char *body,
                        bool wrap)
-      : m_name(name), m_prefix(prefix), m_body(body), m_wrap(wrap) {}
+      : m_name(name), m_prefix(prefix), m_body(body), m_wrap(wrap) {
+    m_body = "/*LLDB_EXPR*/" + m_body;
+  }
 
   std::string m_name;
   std::string m_prefix;

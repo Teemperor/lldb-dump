@@ -591,9 +591,8 @@ namespace {
           return !Result.Macro->getName().startswith(Filter);
         case CodeCompletionResult::RK_Pattern:
           return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
-        default:
-          llvm_unreachable("Unknown code completion result Kind.");
         }
+      llvm_unreachable("Unknown code completion result Kind.");
       // If we reach this, then we should just ignore whatever kind of unknown
       // result we got back.
       return true;
@@ -660,10 +659,12 @@ namespace {
   };
 }
 
-bool ClangExpressionParser::Complete(StringList &matches) {
+bool ClangExpressionParser::Complete(StringList &matches, unsigned line, unsigned pos, unsigned typed_pos) {
   DiagnosticManager mgr;
-  CodeComplete CC(matches, m_expr.Text(), strlen(m_expr.Text()));
-  ParseInternal(mgr, &CC);
+  LLVMUserExpression& llvm_expr = *static_cast<LLVMUserExpression*>(&m_expr);
+  CodeComplete CC(matches, llvm_expr.GetUserText(), typed_pos);
+  m_code_generator.reset();
+  ParseInternal(mgr, &CC, line, pos);
   return true;
 }
 
@@ -672,7 +673,8 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
 }
 
 unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_manager,
-                                              CodeCompleteConsumer *completion_consumer) {
+                                              CodeCompleteConsumer *completion_consumer,
+                                              unsigned completion_line, unsigned completion_pos) {
   ClangDiagnosticManagerAdapter *adapter =
       static_cast<ClangDiagnosticManagerAdapter *>(
           m_compiler->getDiagnostics().getClient());
@@ -685,7 +687,8 @@ unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_mana
 
   clang::SourceManager &source_mgr = m_compiler->getSourceManager();
   bool created_main_file = false;
-  if (true /* We need to have a real file for code completion ... */ || m_compiler->getCodeGenOpts().getDebugInfo() ==
+  if (completion_consumer /*Need a real file to set completion token...*/
+      || m_compiler->getCodeGenOpts().getDebugInfo() ==
       codegenoptions::FullDebugInfo) {
     int temp_fd = -1;
     llvm::SmallString<PATH_MAX> result_path;
@@ -733,8 +736,8 @@ unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_mana
 
   if (completion_consumer) {
     const FileEntry *main_file = source_mgr.getFileEntryForID(source_mgr.getMainFileID());
-    // + 1 because otherwise our last character is replaced by the code completion tok
-    m_compiler->getPreprocessor().SetCodeCompletionPoint(main_file, 1, strlen(expr_text) + 1);
+    // pos + 1 because otherwise our last character is replaced by the code completion tok
+    m_compiler->getPreprocessor().SetCodeCompletionPoint(main_file, completion_line, completion_pos + 1);
   }
 
   if (ast_transformer) {

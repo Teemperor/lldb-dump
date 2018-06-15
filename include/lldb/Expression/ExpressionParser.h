@@ -49,7 +49,7 @@ public:
   //------------------------------------------------------------------
   virtual ~ExpressionParser(){};
 
-  virtual bool Complete(StringList &matches) = 0;
+  virtual bool Complete(StringList &matches, unsigned line, unsigned pos, unsigned typed_pos) = 0;
 
   //------------------------------------------------------------------
   /// Parse a single expression and convert it to IR using Clang.  Don't wrap

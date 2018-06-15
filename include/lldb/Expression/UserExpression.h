@@ -98,7 +98,7 @@ public:
                      lldb_private::ExecutionPolicy execution_policy,
                      bool keep_result_in_memory, bool generate_debug_info) = 0;
 
-  virtual bool Complete(ExecutionContext &exe_ctx, StringList &matches) {
+  virtual bool Complete(ExecutionContext &exe_ctx, StringList &matches, unsigned complete_pos) {
     return false;
   }
 
