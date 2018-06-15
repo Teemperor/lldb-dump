@@ -554,6 +554,19 @@ namespace {
     unsigned position = 0;
     StringList &matches;
 
+    std::string insertAndConsumeFromEnd(const std::string &base, unsigned pos, const std::string &input) {
+      std::string prefix = base.substr(0, pos);
+      std::string inputCopy = input;
+      while(!prefix.empty() && !inputCopy.empty()) {
+        if (prefix.back() == inputCopy.front()) {
+          prefix.resize(prefix.size() - 1);
+          inputCopy = inputCopy.substr(1);
+        } else
+          break;
+      }
+      return input + base.substr(pos);
+    }
+
   public:
     CodeComplete(StringList &matches, std::string expr, unsigned position)
       : CodeCompleteConsumer(CodeCompleteOptions(), false),
@@ -578,8 +591,12 @@ namespace {
           return !Result.Macro->getName().startswith(Filter);
         case CodeCompletionResult::RK_Pattern:
           return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
+        default:
+          llvm_unreachable("Unknown code completion result Kind.");
         }
-        llvm_unreachable("Unknown code completion result Kind.");
+      // If we reach this, then we should just ignore whatever kind of unknown
+      // result we got back.
+      return true;
     }
 
     /// \name Code-completion callbacks
@@ -616,7 +633,7 @@ namespace {
         }
         if (!ToInsert.empty()) {
           auto NewCompletion = expr;
-          matches.AppendString(NewCompletion.insert(position, ToInsert));
+          matches.AppendString(insertAndConsumeFromEnd(NewCompletion, position, ToInsert));
         }
       }
     }
