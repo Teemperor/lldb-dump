@@ -554,17 +554,38 @@ namespace {
     unsigned position = 0;
     StringList &matches;
 
-    std::string insertAndConsumeFromEnd(const std::string &base, unsigned pos, const std::string &input) {
-      std::string prefix = base.substr(0, pos);
-      std::string inputCopy = input;
-      while(!prefix.empty() && !inputCopy.empty()) {
-        if (prefix.back() == inputCopy.front()) {
-          prefix.resize(prefix.size() - 1);
-          inputCopy = inputCopy.substr(1);
-        } else
-          break;
+    bool isIdChar(char c) {
+      return c == '_' || std::isalnum(c);
+    }
+
+    StringRef dropUnrelatedFrontTokens(StringRef prefix) {
+      if (prefix.empty())
+        return prefix;
+
+      if (prefix.back() == ' ')
+        return StringRef();
+
+      StringRef to_remove = prefix;
+      while (!to_remove.empty() && to_remove.back() != ' ') {
+        to_remove = to_remove.drop_back();
       }
-      return input + base.substr(pos);
+      prefix = prefix.drop_front(to_remove.size());
+
+      return prefix;
+    }
+
+    StringRef removeLastToken(StringRef prefix) {
+      while (!prefix.empty() && isIdChar(prefix.back())) {
+        prefix = prefix.drop_back();
+      }
+      return prefix;
+    }
+
+    std::string mergeCompletionWithExisting(StringRef existing, unsigned pos, StringRef completion) {
+      StringRef prefix = existing.substr(0, pos);
+      prefix = removeLastToken(prefix);
+      prefix = dropUnrelatedFrontTokens(prefix);
+      return prefix.str() + completion.str();
     }
 
   public:
@@ -582,16 +603,16 @@ namespace {
                                      CodeCompletionResult Result) override {
       // This code is copied from CodeCompleteConsumer...
       switch (Result.Kind) {
-        case CodeCompletionResult::RK_Declaration:
-          return !(Result.Declaration->getIdentifier() &&
-                  Result.Declaration->getIdentifier()->getName().startswith(Filter));
-        case CodeCompletionResult::RK_Keyword:
-          return !StringRef(Result.Keyword).startswith(Filter);
-        case CodeCompletionResult::RK_Macro:
-          return !Result.Macro->getName().startswith(Filter);
-        case CodeCompletionResult::RK_Pattern:
-          return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
-        }
+      case CodeCompletionResult::RK_Declaration:
+        return !(Result.Declaration->getIdentifier() &&
+                Result.Declaration->getIdentifier()->getName().startswith(Filter));
+      case CodeCompletionResult::RK_Keyword:
+        return !StringRef(Result.Keyword).startswith(Filter);
+      case CodeCompletionResult::RK_Macro:
+        return !Result.Macro->getName().startswith(Filter);
+      case CodeCompletionResult::RK_Pattern:
+        return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
+      }
       llvm_unreachable("Unknown code completion result Kind.");
       // If we reach this, then we should just ignore whatever kind of unknown
       // result we got back.
@@ -631,8 +652,7 @@ namespace {
             break;
         }
         if (!ToInsert.empty()) {
-          auto NewCompletion = expr;
-          matches.AppendString(insertAndConsumeFromEnd(NewCompletion, position, ToInsert));
+          matches.AppendString(mergeCompletionWithExisting(expr, position, ToInsert));
         }
       }
     }
