@@ -331,10 +331,8 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
   options.SetTryAllThreads(m_command_options.try_all_threads);
   options.SetDebug(m_command_options.debug);
   options.SetLanguage(m_command_options.language);
-  options.SetExecutionPolicy(
-      m_command_options.allow_jit
-          ? EvaluateExpressionOptions::default_execution_policy
-          : lldb_private::eExecutionPolicyNever);
+  // Needed that Text() returns the m_transformed_text later... (???)
+  options.SetExecutionPolicy(lldb_private::eExecutionPolicyTopLevel);
 
   bool auto_apply_fixits;
   if (m_command_options.auto_apply_fixits == eLazyBoolCalculate)

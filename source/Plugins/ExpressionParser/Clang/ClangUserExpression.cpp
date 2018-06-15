@@ -592,6 +592,150 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
 }
 
 bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches) {
+  DiagnosticManager diagnostic_manager;
+  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+
+  Status err;
+
+  InstallContext(exe_ctx);
+
+  if (Target *target = exe_ctx.GetTargetPtr()) {
+    if (PersistentExpressionState *persistent_state =
+            target->GetPersistentExpressionStateForLanguage(
+                lldb::eLanguageTypeC)) {
+      m_result_delegate.RegisterPersistentState(persistent_state);
+    } else {
+      diagnostic_manager.PutString(
+          eDiagnosticSeverityError,
+          "couldn't start parsing (no persistent data)");
+      return false;
+    }
+  } else {
+    diagnostic_manager.PutString(eDiagnosticSeverityError,
+                                 "error: couldn't start parsing (no target)");
+    return false;
+  }
+
+  ScanContext(exe_ctx, err);
+
+  if (!err.Success()) {
+    diagnostic_manager.PutString(eDiagnosticSeverityWarning, err.AsCString());
+  }
+
+  ////////////////////////////////////
+  // Generate the expression
+  //
+
+  ApplyObjcCastHack(m_expr_text);
+
+  std::string prefix = m_expr_prefix;
+
+  if (ClangModulesDeclVendor *decl_vendor =
+          m_target->GetClangModulesDeclVendor()) {
+    const ClangModulesDeclVendor::ModuleVector &hand_imported_modules =
+        llvm::cast<ClangPersistentVariables>(
+            m_target->GetPersistentExpressionStateForLanguage(
+                lldb::eLanguageTypeC))
+            ->GetHandLoadedClangModules();
+    ClangModulesDeclVendor::ModuleVector modules_for_macros;
+
+    for (ClangModulesDeclVendor::ModuleID module : hand_imported_modules) {
+      modules_for_macros.push_back(module);
+    }
+
+    if (m_target->GetEnableAutoImportClangModules()) {
+      if (StackFrame *frame = exe_ctx.GetFramePtr()) {
+        if (Block *block = frame->GetFrameBlock()) {
+          SymbolContext sc;
+
+          block->CalculateSymbolContext(&sc);
+
+          if (sc.comp_unit) {
+            StreamString error_stream;
+
+            decl_vendor->AddModulesForCompileUnit(
+                *sc.comp_unit, modules_for_macros, error_stream);
+          }
+        }
+      }
+    }
+  }
+
+  lldb::LanguageType lang_type = lldb::eLanguageTypeUnknown;
+
+  if (m_options.GetExecutionPolicy() == eExecutionPolicyTopLevel) {
+    m_transformed_text = m_expr_text;
+  } else {
+    std::unique_ptr<ExpressionSourceCode> source_code(
+        ExpressionSourceCode::CreateWrapped(prefix.c_str(),
+                                            m_expr_text.c_str()));
+
+    if (m_in_cplusplus_method)
+      lang_type = lldb::eLanguageTypeC_plus_plus;
+    else if (m_in_objectivec_method)
+      lang_type = lldb::eLanguageTypeObjC;
+    else
+      lang_type = lldb::eLanguageTypeC;
+
+    if (!source_code->GetText(m_transformed_text, lang_type, m_in_static_method,
+                              exe_ctx)) {
+      diagnostic_manager.PutString(eDiagnosticSeverityError,
+                                   "couldn't construct expression body");
+      return false;
+    }
+  }
+
+  if (log)
+    log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
+
+  ////////////////////////////////////
+  // Set up the target and compiler
+  //
+
+  Target *target = exe_ctx.GetTargetPtr();
+
+  if (!target) {
+    diagnostic_manager.PutString(eDiagnosticSeverityError, "invalid target");
+    return false;
+  }
+
+  //////////////////////////
+  // Parse the expression
+  //
+
+  m_materializer_ap.reset(new Materializer());
+
+  ResetDeclMap(exe_ctx, m_result_delegate, true /*Was a variable before TODO */);
+
+  class OnExit {
+  public:
+    typedef std::function<void(void)> Callback;
+
+    OnExit(Callback const &callback) : m_callback(callback) {}
+
+    ~OnExit() { m_callback(); }
+
+  private:
+    Callback m_callback;
+  };
+
+  OnExit on_exit([this]() { ResetDeclMap(); });
+
+  if (!DeclMap()->WillParse(exe_ctx, m_materializer_ap.get())) {
+    diagnostic_manager.PutString(
+        eDiagnosticSeverityError,
+        "current process state is unsuitable for expression parsing");
+
+    ResetDeclMap(); // We are being careful here in the case of breakpoint
+                    // conditions.
+
+    return false;
+  }
+
+  if (m_options.GetExecutionPolicy() == eExecutionPolicyTopLevel) {
+    DeclMap()->SetLookupsEnabled(true);
+  }
+
   Process *process = exe_ctx.GetProcessPtr();
   ExecutionContextScope *exe_scope = process;
 
@@ -601,9 +745,11 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
   // We use a shared pointer here so we can use the original parser - if it
   // succeeds or the rewrite parser we might make if it fails.  But the
   // parser_sp will never be empty.
+
   ClangExpressionParser parser(exe_scope, *this, false);
 
-  parser.Complete(matches);
+  unsigned num_errors = parser.Complete(matches);
+
   return true;
 }
 

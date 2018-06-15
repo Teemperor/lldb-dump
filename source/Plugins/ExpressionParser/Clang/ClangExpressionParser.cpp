@@ -34,6 +34,7 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 
@@ -549,9 +550,15 @@ namespace {
   class CodeComplete : public CodeCompleteConsumer {
     CodeCompletionTUInfo CCTUInfo;
 
+    std::string expr;
+    unsigned position = 0;
+    StringList &matches;
+
   public:
-    CodeComplete() : CodeCompleteConsumer(CodeCompleteOptions(), false),
-      CCTUInfo(std::make_shared<GlobalCodeCompletionAllocator>()) {}
+    CodeComplete(StringList &matches, std::string expr, unsigned position)
+      : CodeCompleteConsumer(CodeCompleteOptions(), false),
+      CCTUInfo(std::make_shared<GlobalCodeCompletionAllocator>()),
+      expr(expr), position(position), matches(matches) {}
 
     /// Deregisters and destroys this code-completion consumer.
     virtual ~CodeComplete() {}
@@ -559,21 +566,59 @@ namespace {
     /// \name Code-completion filtering
     /// Check if the result should be filtered out.
     bool isResultFilteredOut(StringRef Filter,
-                                     CodeCompletionResult Results) override {
-      abort();
-      llvm::errs() << "WOOOP\n";
-      return false;
+                                     CodeCompletionResult Result) override {
+      // This code is copied from CodeCompleteConsumer...
+      switch (Result.Kind) {
+        case CodeCompletionResult::RK_Declaration:
+          return !(Result.Declaration->getIdentifier() &&
+                  Result.Declaration->getIdentifier()->getName().startswith(Filter));
+        case CodeCompletionResult::RK_Keyword:
+          return !StringRef(Result.Keyword).startswith(Filter);
+        case CodeCompletionResult::RK_Macro:
+          return !Result.Macro->getName().startswith(Filter);
+        case CodeCompletionResult::RK_Pattern:
+          return !StringRef(Result.Pattern->getAsString()).startswith(Filter);
+        }
+        llvm_unreachable("Unknown code completion result Kind.");
     }
 
     /// \name Code-completion callbacks
     //@{
     /// Process the finalized code-completion results.
-    void ProcessCodeCompleteResults(Sema &S,
+    void ProcessCodeCompleteResults(Sema &SemaRef,
                                             CodeCompletionContext Context,
                                             CodeCompletionResult *Results,
                                             unsigned NumResults) override {
-      llvm::errs() << "WOOOP\n";
-      abort();
+
+      std::stable_sort(Results, Results + NumResults);
+
+      StringRef Filter = SemaRef.getPreprocessor().getCodeCompletionFilter();
+
+      // Print the results.
+      for (unsigned I = 0; I != NumResults; ++I) {
+        if(!Filter.empty() && isResultFilteredOut(Filter, Results[I]))
+          continue;
+        CodeCompletionResult &R = Results[I];
+        std::string ToInsert;
+        switch(R.Kind) {
+          case CodeCompletionResult::RK_Declaration:
+            ToInsert = R.Declaration->getNameAsString();
+            break;
+          case CodeCompletionResult::RK_Keyword:
+            ToInsert = R.Keyword;
+            break;
+          case CodeCompletionResult::RK_Macro:
+            ToInsert = R.Macro->getName().str();
+            break;
+          case CodeCompletionResult::RK_Pattern:
+            ToInsert = R.Pattern->getTypedText();
+            break;
+        }
+        if (!ToInsert.empty()) {
+          auto NewCompletion = expr;
+          matches.AppendString(NewCompletion.insert(position, ToInsert));
+        }
+      }
     }
 
     /// \param S the semantic-analyzer object for which code-completion is being
@@ -587,8 +632,6 @@ namespace {
     void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                            OverloadCandidate *Candidates,
                                            unsigned NumCandidates) override {
-      abort();
-      llvm::errs() << "WOOOP\n";
 
     }
 
@@ -602,7 +645,7 @@ namespace {
 
 bool ClangExpressionParser::Complete(StringList &matches) {
   DiagnosticManager mgr;
-  CodeComplete CC;
+  CodeComplete CC(matches, m_expr.Text(), strlen(m_expr.Text()));
   ParseInternal(mgr, &CC);
   return true;
 }
@@ -625,7 +668,7 @@ unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_mana
 
   clang::SourceManager &source_mgr = m_compiler->getSourceManager();
   bool created_main_file = false;
-  if (m_compiler->getCodeGenOpts().getDebugInfo() ==
+  if (true /* We need to have a real file for code completion ... */ || m_compiler->getCodeGenOpts().getDebugInfo() ==
       codegenoptions::FullDebugInfo) {
     int temp_fd = -1;
     llvm::SmallString<PATH_MAX> result_path;
@@ -670,6 +713,12 @@ unsigned ClangExpressionParser::ParseInternal(DiagnosticManager &diagnostic_mana
 
   if (ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap())
     decl_map->InstallCodeGenerator(m_code_generator.get());
+
+  if (completion_consumer) {
+    const FileEntry *main_file = source_mgr.getFileEntryForID(source_mgr.getMainFileID());
+    // + 1 because otherwise our last character is replaced by the code completion tok
+    m_compiler->getPreprocessor().SetCodeCompletionPoint(main_file, 1, strlen(expr_text) + 1);
+  }
 
   if (ast_transformer) {
     ast_transformer->Initialize(m_compiler->getASTContext());
