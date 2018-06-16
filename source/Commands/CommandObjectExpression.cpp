@@ -308,6 +308,35 @@ CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
 
+static int wordPosToAbsolutePos(llvm::StringRef cmd,
+                                int word_pos,
+                                int char_pos) {
+  int result = 0;
+  bool in_space = false;
+
+  while(!cmd.empty() && cmd.front() == ' ') {
+    cmd = cmd.drop_front();
+    ++result;
+  }
+
+  if (word_pos != 0) {
+    while (!cmd.empty()) {
+      const char c = cmd.front();
+      cmd = cmd.drop_front();
+      if (c == ' ')
+        in_space = true;
+      else if (in_space) {
+        word_pos--;
+        if (word_pos == 0)
+          break;
+        in_space = false;
+      }
+      ++result;
+    }
+  }
+  return result + char_pos;
+}
+
 int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
                                               int &cursor_char_position,
                                               int match_start_point,
@@ -375,7 +404,8 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
         eLanguageTypeC_plus_plus_11, UserExpression::eResultTypeAny,
                                              options, error));
 
-    expr->Complete(exe_ctx, matches, arg.size());
+    int completePos = wordPosToAbsolutePos(arg, cursor_index, cursor_char_position);
+    expr->Complete(exe_ctx, matches, completePos);
     return matches.GetSize();
   } else {
     llvm::errs() << "NO TARGET :(\n";
