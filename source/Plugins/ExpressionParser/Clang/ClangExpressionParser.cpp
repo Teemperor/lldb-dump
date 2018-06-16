@@ -627,8 +627,6 @@ namespace {
                                             CodeCompletionResult *Results,
                                             unsigned NumResults) override {
 
-      std::stable_sort(Results, Results + NumResults);
-
       StringRef Filter = SemaRef.getPreprocessor().getCodeCompletionFilter();
 
       // Print the results.
@@ -651,6 +649,8 @@ namespace {
             ToInsert = R.Pattern->getTypedText();
             break;
         }
+        if (StringRef(ToInsert).startswith("$__lldb_"))
+          continue;
         if (!ToInsert.empty()) {
           matches.AppendString(mergeCompletionWithExisting(expr, position, ToInsert));
         }
