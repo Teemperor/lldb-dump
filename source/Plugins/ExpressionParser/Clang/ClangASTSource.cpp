@@ -954,6 +954,10 @@ void ClangASTSource::FindExternalVisibleDecls(
 
         lldb::ProcessSP process(m_target->GetProcessSP());
 
+        if (!m_ast_context->getLangOpts().ObjC1 || !m_ast_context->getLangOpts().ObjC2)
+          break;
+
+
         if (!process)
           break;
 
