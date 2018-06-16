@@ -308,32 +308,63 @@ CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
 
-static int wordPosToAbsolutePos(llvm::StringRef cmd,
-                                int word_pos,
-                                int char_pos) {
-  int result = 0;
-  bool in_space = false;
 
+//------------------------------------------------------------------
+/// Converts a position given by the completion API (word position and character
+/// position in the indexed word) to an absolute character position in the
+/// argument string.
+///
+/// @param[in] cmd
+///     The argument string.
+/// @param[in] word_pos
+///     The position of the selected word.
+/// @param[in] char_pos
+///     The character position inside the selected word.
+///
+/// @return
+///     The absolute position inside the argument string.
+///
+/// @example
+///   WordPosToAbsolutePos("ab cd", 1, 1) == 4 (points to the 'd')s
+static int WordPosToAbsolutePos(llvm::StringRef cmd,
+                                int word_pos,
+                                const int char_pos) {
+  int result = 0;
+
+  // Skip any leading whitespace.
   while(!cmd.empty() && cmd.front() == ' ') {
     cmd = cmd.drop_front();
     ++result;
   }
 
+  // If we have to search for a specific word, we iterate over the string until
+  // we find the word.
   if (word_pos != 0) {
+    // Track if the last char was a whitepace.
+    bool last_was_whitespace = false;
+    int words_left = word_pos;
+
     while (!cmd.empty()) {
       const char c = cmd.front();
       cmd = cmd.drop_front();
+      // We have to keep track of whitespace to make see how many words we have
+      // iterated over so far.
       if (c == ' ')
-        in_space = true;
-      else if (in_space) {
-        word_pos--;
-        if (word_pos == 0)
+        last_was_whitespace = true;
+      else if (last_was_whitespace) {
+        // We just left a whitespace part and entered a word, so we let's
+        // decrease our counter to keep track of where we are.
+        words_left--;
+        // We found the selected word.
+        if (words_left == 0)
           break;
-        in_space = false;
+        last_was_whitespace = false;
       }
       ++result;
     }
   }
+  // result now points to the start of the selected word, so we can just add the
+  // char_pos to get the final absolute position.
   return result + char_pos;
 }
 
@@ -350,44 +381,12 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
 
   Target *target = exe_ctx.GetTargetPtr();
 
-
   EvaluateExpressionOptions options;
   options.SetCoerceToId(m_varobj_options.use_objc);
-  options.SetUnwindOnError(m_command_options.unwind_on_error);
-  options.SetIgnoreBreakpoints(m_command_options.ignore_breakpoints);
-  options.SetKeepInMemory(false); // TODO
-  options.SetUseDynamic(m_varobj_options.use_dynamic);
-  options.SetTryAllThreads(m_command_options.try_all_threads);
-  options.SetDebug(m_command_options.debug);
   options.SetLanguage(m_command_options.language);
-  options.SetExecutionPolicy(
-      m_command_options.allow_jit
-          ? EvaluateExpressionOptions::default_execution_policy
-          : lldb_private::eExecutionPolicyNever);
-
-  bool auto_apply_fixits;
-  if (m_command_options.auto_apply_fixits == eLazyBoolCalculate)
-    auto_apply_fixits = target->GetEnableAutoApplyFixIts();
-  else
-    auto_apply_fixits =
-        m_command_options.auto_apply_fixits == eLazyBoolYes ? true : false;
-
-  options.SetAutoApplyFixIts(auto_apply_fixits);
-
-  // Uncomment to make it work again normally... TODO: Remove
-  if (m_command_options.top_level)
-    options.SetExecutionPolicy(eExecutionPolicyTopLevel);
-
-  // If there is any chance we are going to stop and want to see what went
-  // wrong with our expression, we should generate debug info
-  if (!m_command_options.ignore_breakpoints ||
-      !m_command_options.unwind_on_error)
-    options.SetGenerateDebugInfo(true);
-
-  if (m_command_options.timeout > 0)
-    options.SetTimeout(std::chrono::microseconds(m_command_options.timeout));
-  else
-    options.SetTimeout(llvm::None);
+  options.SetExecutionPolicy(lldb_private::eExecutionPolicyNever);
+  options.SetAutoApplyFixIts(false);
+  options.SetGenerateDebugInfo(false);
 
   if (!target)
     target = GetDummyTarget();
@@ -398,19 +397,21 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
 
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
 
+    // TODO: Is this different than the command_options language.
+    auto language = exe_ctx.GetFrameRef().GetLanguage();
+
     Status error;
     lldb::UserExpressionSP expr(
-        target->GetUserExpressionForLanguage(arg.c_str(), "",
-        eLanguageTypeC_plus_plus_11, UserExpression::eResultTypeAny,
-                                             options, error));
+        target->GetUserExpressionForLanguage(arg, "",
+        language, UserExpression::eResultTypeAny, options, error));
 
-    int completePos = wordPosToAbsolutePos(arg, cursor_index, cursor_char_position);
+    int completePos = WordPosToAbsolutePos(arg, cursor_index,
+                                           cursor_char_position);
     expr->Complete(exe_ctx, matches, completePos);
     return matches.GetSize();
-  } else {
-    llvm::errs() << "NO TARGET :(\n";
-    return 0;
   }
+
+  return 0;
 }
 
 static lldb_private::Status
