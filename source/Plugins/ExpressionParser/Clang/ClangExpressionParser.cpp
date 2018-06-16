@@ -555,7 +555,7 @@ namespace {
     StringList &matches;
 
     bool isIdChar(char c) {
-      return c == '_' || std::isalnum(c);
+      return c == '_' || std::isalnum(c) || c == '$';
     }
 
     StringRef dropUnrelatedFrontTokens(StringRef prefix) {
