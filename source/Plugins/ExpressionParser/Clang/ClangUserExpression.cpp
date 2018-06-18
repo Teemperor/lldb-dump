@@ -704,7 +704,8 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
     } else
       ++complete_column_offset;
   }
-  assert(found && "Couldn't find our code completion needle?");
+  if (!found)
+    return false;
 
   if (log)
     log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
