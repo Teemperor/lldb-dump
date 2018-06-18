@@ -1779,6 +1779,7 @@ int CommandInterpreter::HandleCompletion(
   // last character.
 
   Args parsed_line(llvm::StringRef(current_line, last_char - current_line));
+  Args original_line = parsed_line;
   Args partial_parsed_line(
       llvm::StringRef(current_line, cursor - current_line));
 
@@ -1854,8 +1855,10 @@ int CommandInterpreter::HandleCompletion(
 
     std::string common_prefix;
     matches.LongestCommonPrefix(common_prefix);
-    const size_t partial_name_len = command_partial_str.size();
-    common_prefix.erase(0, partial_name_len);
+    if (llvm::StringRef(common_prefix).startswith(command_partial_str)) {
+      const size_t partial_name_len = command_partial_str.size();
+      common_prefix.erase(0, partial_name_len);
+    }
 
     // If we matched a unique single command, add a space... Only do this if
     // the completer told us this was a complete word, however...
@@ -1866,6 +1869,13 @@ int CommandInterpreter::HandleCompletion(
       if (quote_char != '\0')
         common_prefix.push_back(quote_char);
       common_prefix.push_back(' ');
+
+      original_line.ReplaceArgumentAtIndex(cursor_index + 1, common_prefix);
+      std::string result;
+      original_line.GetCommandString(result);
+      matches.Clear();
+      matches.InsertStringAtIndex(0, result);
+      return -2;
     }
     matches.InsertStringAtIndex(0, common_prefix.c_str());
   }
