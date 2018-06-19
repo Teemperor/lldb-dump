@@ -668,14 +668,15 @@ namespace {
     void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                            OverloadCandidate *Candidates,
                                            unsigned NumCandidates) override {
-
     }
 
     CodeCompletionAllocator &getAllocator() override {
       return CCTUInfo.getAllocator();
     }
 
-    CodeCompletionTUInfo &getCodeCompletionTUInfo() override { return CCTUInfo; }
+    CodeCompletionTUInfo &getCodeCompletionTUInfo() override {
+      return CCTUInfo;
+    }
   };
 }
 
