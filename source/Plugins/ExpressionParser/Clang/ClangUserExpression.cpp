@@ -591,33 +591,37 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
-static bool FindLLDBExprNeedle(llvm::StringRef Code,
-                               unsigned &line,
-                               unsigned &column) {
-  // Reset to sensible start values.
+LLVM_NODISCARD
+static bool FindNeedlePosition(llvm::StringRef needle,llvm::StringRef code,
+                               unsigned &line, unsigned &column) {
+  // Reset to code position to beginning of the file.
   line = 1;
   column = 0;
 
-  std::string Needle = "/*LLDB_EXPR*/";
-  for (std::size_t i = 0; i < Code.size(); ++i) {
-    llvm::StringRef Lookahead = Code.substr(i, Needle.size());
+  // We have to search the needle and we have to keep track of lines/columns.
+  for (std::size_t i = 0; i < code.size(); ++i) {
+    llvm::StringRef lookahead = code.substr(i, needle.size());
 
-    if (Lookahead == Needle) {
-      column += Needle.size();
+    // If we found the needle, we set the completion pos behind that.
+    if (lookahead == needle) {
+      column += needle.size();
       return true;
     }
 
-    if (Code[i] == '\n') {
+    // If we hit a line break, we go back to column 0.
+    if (code[i] == '\n') {
       ++line;
       column = 0;
       continue;
     }
     ++column;
   }
+  // We didn't find the needle and should inform the caller.
   return false;
 }
 
-bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches, unsigned complete_pos) {
+bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
+                                   StringList &matches, unsigned complete_pos) {
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
 
   // We don't want any user visible feedback when completing an expression.
@@ -661,18 +665,15 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
   if (!exe_scope)
     exe_scope = exe_ctx.GetTargetPtr();
 
-  // We use a shared pointer here so we can use the original parser - if it
-  // succeeds or the rewrite parser we might make if it fails.  But the
-  // parser_sp will never be empty.
-
   ClangExpressionParser parser(exe_scope, *this, false);
 
   unsigned complete_line, complete_column_offset;
-  if (!FindLLDBExprNeedle(m_transformed_text, complete_line,
+  if (!FindNeedlePosition("/*LLDB_EXPR*/", m_transformed_text, complete_line,
                           complete_column_offset))
     return false;
 
-  parser.Complete(matches, complete_line, complete_pos + complete_column_offset, complete_pos);
+  parser.Complete(matches, complete_line, complete_pos + complete_column_offset,
+                  complete_pos);
 
   return true;
 }
