@@ -46,8 +46,6 @@ public:
                                     lldb::LanguageType wrapping_language,
                                     size_t &start_loc, size_t &end_loc);
 
-  unsigned OffsetLine = 0;
-  unsigned OffsetColumn = 0;
 private:
   ExpressionSourceCode(const char *name, const char *prefix, const char *body,
                        bool wrap)

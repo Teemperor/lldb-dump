@@ -667,6 +667,11 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
 
   ClangExpressionParser parser(exe_scope, *this, false);
 
+  unsigned complete_line, complete_column_offset;
+  if (!FindLLDBExprNeedle(m_transformed_text, complete_line,
+                          complete_column_offset)) {
+    return false;
+
   parser.Complete(matches, complete_line, complete_pos + complete_column_offset, complete_pos);
 
   return true;
