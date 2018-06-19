@@ -406,13 +406,8 @@ llvm::Optional<lldb::LanguageType> ClangUserExpression::GetLanguageForExpr(
   return lang_type;
 }
 
-bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
-                                ExecutionContext &exe_ctx,
-                                lldb_private::ExecutionPolicy execution_policy,
-                                bool keep_result_in_memory,
-                                bool generate_debug_info) {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
-
+bool ClangUserExpression::PrepareForParsing(
+    DiagnosticManager &diagnostic_manager, ExecutionContext &exe_ctx) {
   InstallContext(exe_ctx);
 
   if (!SetupPersistentState(diagnostic_manager, exe_ctx))
@@ -432,6 +427,18 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   ApplyObjcCastHack(m_expr_text);
 
   SetupDeclVendor(exe_ctx, m_target);
+  return true;
+}
+
+bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
+                                ExecutionContext &exe_ctx,
+                                lldb_private::ExecutionPolicy execution_policy,
+                                bool keep_result_in_memory,
+                                bool generate_debug_info) {
+  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+
+  if (!PrepareForParsing(diagnostic_manager, exe_ctx))
+    return false;
 
   lldb::LanguageType lang_type = lldb::LanguageType::eLanguageTypeUnknown;
   if (auto new_lang = GetLanguageForExpr(diagnostic_manager, exe_ctx)) {
