@@ -29,7 +29,7 @@ class ExprXValuePrintingTestCase(TestBase):
         value = frame.EvaluateExpression("foo().data")
         self.assertTrue(value.IsValid())
         self.assertTrue(value.GetError().Success())
-        self.assertEqual(value.GetValueAsUnsigned(), 0)
+        self.assertEqual(value.GetValueAsUnsigned(), 1234)
 
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr21765")
     def test(self):

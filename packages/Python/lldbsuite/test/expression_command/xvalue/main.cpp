@@ -1,14 +1,14 @@
 #include <stddef.h>
 
-struct StringRef
+struct Tmp
 {
-  const char *data = 0;
+  int data = 1234;
 };
 
-StringRef foo() { return StringRef(); }
+Tmp foo() { return Tmp(); }
 
 int main(int argc, char const *argv[])
 {
-  const char *something = foo().data;
+  int something = foo().data;
   return 0; // Break here
 }
