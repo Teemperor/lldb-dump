@@ -591,6 +591,32 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
+static bool FindLLDBExprNeedle(llvm::StringRef Code,
+                               unsigned &line,
+                               unsigned &column) {
+  // Reset to sensible start values.
+  line = 1;
+  column = 0;
+
+  std::string Needle = "/*LLDB_EXPR*/";
+  for (std::size_t i = 0; i < Code.size(); ++i) {
+    llvm::StringRef Lookahead = Code.substr(i, Needle.size());
+
+    if (Lookahead == Needle) {
+      column += Needle.size();
+      return true;
+    }
+
+    if (Code[i] == '\n') {
+      ++line;
+      column = 0;
+      continue;
+    }
+    ++column;
+  }
+  return false;
+}
+
 bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matches, unsigned complete_pos) {
   DiagnosticManager diagnostic_manager;
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
@@ -685,27 +711,10 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx, StringList &matche
     }
   }
 
-  unsigned complete_line = 1;
-  unsigned complete_column_offset = 0;
-
-  bool found = false;
-  std::string Needle = "/*LLDB_EXPR*/";
-  for (std::size_t i = 0; i < m_transformed_text.size(); ++i) {
-    std::string Future = m_transformed_text.substr(i > 10 ? i - 10 : 0, Needle.size() + 30);
-    std::string Lookahead = m_transformed_text.substr(i, Needle.size());
-    if (Lookahead == Needle) {
-      complete_column_offset += Needle.size();
-      found = true;
-      break;
-    }
-    if (m_transformed_text[i] == '\n') {
-      ++complete_line;
-      complete_column_offset = 0;
-    } else
-      ++complete_column_offset;
-  }
-  if (!found)
+  unsigned complete_line, complete_column_offset;
+  if (!FindLLDBExprNeedle(m_transformed_text, complete_line, complete_column_offset)) {
     return false;
+  }
 
   if (log)
     log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
