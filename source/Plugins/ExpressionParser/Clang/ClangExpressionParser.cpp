@@ -637,16 +637,22 @@ namespace {
         CodeCompletionResult &R = Results[I];
         std::string ToInsert;
         switch(R.Kind) {
-          case CodeCompletionResult::RK_Declaration:
+          case CodeCompletionResult::RK_Declaration: {
+            const NamedDecl *D = R.Declaration;
             ToInsert = R.Declaration->getNameAsString();
-            if (const FunctionDecl *F = dyn_cast<FunctionDecl>(R.Declaration)) {
+            if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
               if (F->getNumParams() == 0) {
                 ToInsert += "()";
               } else {
                 ToInsert += "(";
               }
             }
+            if (const NamespaceDecl *N = dyn_cast<NamespaceDecl>(D)) {
+              if (!N->isAnonymousNamespace())
+                ToInsert += "::";
+            }
             break;
+          }
           case CodeCompletionResult::RK_Keyword:
             ToInsert = R.Keyword;
             break;

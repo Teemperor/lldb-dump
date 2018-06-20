@@ -267,24 +267,26 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('expr some_expr.FooWithArgs',
                               'expr some_expr.FooWithArgsBar(',
                               turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooWithMultipleArgs',
+                              'expr some_expr.FooWithMultipleArgsBar(',
+                              turn_off_re_match=True)
         self.complete_from_to('expr some_expr.FooUnderscore',
                               'expr some_expr.FooUnderscoreBar_()',
                               turn_off_re_match=True)
         self.complete_from_to('expr some_expr.FooNumbers',
                               'expr some_expr.FooNumbersBar1()',
                               turn_off_re_match=True)
-        self.complete_from_to('expr some_expr.MemberVariab',
-                              'expr some_expr.MemberVariableBar',
+        self.complete_from_to('expr some_expr.StaticMemberMethod',
+                              'expr some_expr.StaticMemberMethodBar()',
                               turn_off_re_match=True)
         self.complete_from_to('expr Expr::StaticMemberMethod',
                               'expr Expr::StaticMemberMethodBar()',
                               turn_off_re_match=True)
 
         # Completing member variables
-        self.complete_from_to('expr some_expr.StaticMemberMethod',
-                              'expr some_expr.StaticMemberMethodBar()',
+        self.complete_from_to('expr some_expr.MemberVariab',
+                              'expr some_expr.MemberVariableBar',
                               turn_off_re_match=True)
-
 
         # Test with spaces
         self.complete_from_to('expr some_expr .FooNoArgs',
@@ -334,6 +336,57 @@ class CommandLineCompletionTestCase(TestBase):
                               'expr (&some_expr)-> FooNoArgsBar()',
                               turn_off_re_match=True)
 
+        # Builtin arg
+        self.complete_from_to('expr static_ca',
+                              'expr static_cast',
+                              turn_off_re_match=True)
+
+        # Types
+        self.complete_from_to('expr DummyClassForBreakpoin',
+                              'expr DummyClassForBreakpoints',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr LongNamespaceName::NestedCla',
+                              'expr LongNamespaceName::NestedClass',
+                              turn_off_re_match=True)
+
+        # Namespaces
+        self.complete_from_to('expr LongNamespaceNa',
+                              'expr LongNamespaceName::',
+                              turn_off_re_match=True)
+
+        # String
+        self.complete_from_to('expr str.max_si',
+                              'expr str.max_size()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr str.siz',
+                              'expr str.size()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (&str)->leng',
+                              'expr (&str)->length()',
+                              turn_off_re_match=True)
+
+        # Multiple arguments
+        self.complete_from_to('expr &some_expr + &some_e',
+                              'expr &some_expr + &some_expr',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr SomeLongVarNameWithCapitals + SomeLongVarName',
+                              'expr SomeLongVarNameWithCapitals + SomeLongVarNameWithCapitals',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr SomeIntVar + SomeIntV',
+                              'expr SomeIntVar + SomeIntVar',
+                              turn_off_re_match=True)
+
+        # Completing function call arguments
+        self.complete_from_to('expr some_expr.FooWithArgsBar(some_exp',
+                              'expr some_expr.FooWithArgsBar(some_expr',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooWithArgsBar(SomeIntV',
+                              'expr some_expr.FooWithArgsBar(SomeIntVar',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooWithMultipleArgsBar(SomeIntVar, SomeIntVa',
+                              'expr some_expr.FooWithMultipleArgsBar(SomeIntVar, SomeIntVar',
+                              turn_off_re_match=True)
+
 
     def complete_from_to(self, str_input, patterns, turn_off_re_match=False):
         """Test that the completion mechanism completes str_input to patterns,
@@ -365,7 +418,7 @@ class CommandLineCompletionTestCase(TestBase):
             if turn_off_re_match:
                 self.expect(
                     compare_string, msg=COMPLETION_MSG(
-                        str_input, p), exe=False, substrs=[p])
+                        str_input, compare_string), exe=False, substrs=[p])
             else:
                 self.expect(
                     compare_string, msg=COMPLETION_MSG(
