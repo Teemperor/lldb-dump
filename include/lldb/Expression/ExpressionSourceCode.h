@@ -36,6 +36,10 @@ public:
 
   const char *GetName() const { return m_name.c_str(); }
 
+  static std::string getExprMarker() {
+    return "/*LLDB_EXPR*/";
+  }
+
   bool GetText(std::string &text, lldb::LanguageType wrapping_language,
                bool static_method, ExecutionContext &exe_ctx) const;
 
@@ -49,9 +53,7 @@ public:
 private:
   ExpressionSourceCode(const char *name, const char *prefix, const char *body,
                        bool wrap)
-      : m_name(name), m_prefix(prefix), m_body(body), m_wrap(wrap) {
-    m_body = "/*LLDB_EXPR*/" + m_body;
-  }
+      : m_name(name), m_prefix(prefix), m_body(body), m_wrap(wrap) {}
 
   std::string m_name;
   std::string m_prefix;

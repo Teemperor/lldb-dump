@@ -624,8 +624,11 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
                                    StringList &matches, unsigned complete_pos) {
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
 
-  // We don't want any user visible feedback when completing an expression.
+  // We don't want any visible feedback when completing an expression. Mostly
+  // because the results we get from an incomplete invocation are probably not
+  // correct.
   DiagnosticManager diagnostic_manager;
+
   if (!PrepareForParsing(diagnostic_manager, exe_ctx))
     return false;
 
@@ -667,8 +670,16 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
 
   ClangExpressionParser parser(exe_scope, *this, false);
 
+  // We have a needle inside the transformed code that points us to the place
+  // where the source code wrapper placed our user input. We trust that the
+  // user input itself isn't modified (e.g. the nth character starting from the
+  // start of the user input inside the wrapper is also the nth character in
+  // the actual user input).
+  // We find the needle here to correctly find the offset where the Clang Sema
+  // should start its completion logic.
   unsigned complete_line, complete_column_offset;
-  if (!FindNeedlePosition("/*LLDB_EXPR*/", m_transformed_text, complete_line,
+  if (!FindNeedlePosition(ExpressionSourceCode::getExprMarker(),
+                          m_transformed_text, complete_line,
                           complete_column_offset))
     return false;
 

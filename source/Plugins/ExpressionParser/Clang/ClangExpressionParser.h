@@ -77,10 +77,6 @@ public:
   //------------------------------------------------------------------
   unsigned Parse(DiagnosticManager &diagnostic_manager) override;
 
-  unsigned ParseInternal(DiagnosticManager &diagnostic_manager,
-                         clang::CodeCompleteConsumer *completion_consumer = nullptr, unsigned completion_line = 0,
-                         unsigned completion_pos = 0);
-
   bool RewriteExpression(DiagnosticManager &diagnostic_manager) override;
 
   //------------------------------------------------------------------
@@ -153,6 +149,12 @@ public:
   std::string GetClangTargetABI(const ArchSpec &target_arch);
 
 private:
+
+  unsigned ParseInternal(DiagnosticManager &diagnostic_manager,
+                         clang::CodeCompleteConsumer *completion = nullptr,
+                         unsigned completion_line = 0,
+                         unsigned completion_column = 0);
+
   std::unique_ptr<llvm::LLVMContext>
       m_llvm_context; ///< The LLVM context to generate IR into
   std::unique_ptr<clang::FileManager>
