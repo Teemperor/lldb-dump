@@ -184,7 +184,7 @@ class CommandLineExprCompletionTestCase(TestBase):
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24489")
     def test_stress_expr_completion(self):
         """
-        We don't want the completion parsing to cause lldb to fail. This test just throws
+        We don't want the completion parsing to cause lldb to crash. This test just throws
         a few thousand (non-sensical) expressions at it to test this a bit.
         This test passes if lldb doesn't crash during the run.
         """
@@ -196,8 +196,8 @@ class CommandLineExprCompletionTestCase(TestBase):
         (target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(self,
                                           '// Break here', self.main_source_spec)
 
-        # 2000 seems enough to not make this test longer than other test cases (around 10s) on 
-        # my system and still test enough cases to stress the completion a fair bit.
+        # 2000 seems enough to not make this test longer than other test cases (around 10s on
+        # my system) and still test enough cases to stress the completion a fair bit.
         for i in range(2000):
             str_input = self.generate_random_expr(i)
             interp = self.dbg.GetCommandInterpreter()
