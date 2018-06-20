@@ -401,11 +401,12 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
     if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
       m_interpreter.UpdateExecutionContext(nullptr);
 
-    // This didn't work, so let's get our before we start doing things that
+    // This didn't work, so let's get out before we start doing things that
     // expect a valid frame pointer.
     if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
       return 0;
 
+    // Like in the `Parse` method, we should create our own execution context.
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
 
     auto language = exe_ctx.GetFrameRef().GetLanguage();
