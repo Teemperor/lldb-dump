@@ -395,20 +395,34 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
     std::string arg;
     input.GetCommandString(arg);
 
+    // We need a valid execution context with a frame pointer for this
+    // completion, so if we don't have one we should try to make a valid
+    // execution context.
     if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
       m_interpreter.UpdateExecutionContext(nullptr);
+
+    // This didn't work, so let's get our before we start doing things that
+    // expect a valid frame pointer.
+    if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
+      return 0;
+
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
 
     auto language = exe_ctx.GetFrameRef().GetLanguage();
 
     Status error;
     lldb::UserExpressionSP expr(
-        target->GetUserExpressionForLanguage(arg, "",
+        target->GetUserExpressionForLanguage(arg, llvm::StringRef(),
         language, UserExpression::eResultTypeAny, options, error));
+    if (error.Fail())
+      return 0;
 
-    int completePos = WordPosToAbsolutePos(arg, cursor_index,
+    // We got the index of the arg and the cursor index inside that arg as
+    // parameters, but for completing the whole expression we need to revert
+    // this back to the absolute offset of the cursor in the whole expression.
+    int absolute_pos = WordPosToAbsolutePos(arg, cursor_index,
                                            cursor_char_position);
-    expr->Complete(exe_ctx, matches, completePos);
+    expr->Complete(exe_ctx, matches, absolute_pos);
     return matches.GetSize();
   }
 

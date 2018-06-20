@@ -36,6 +36,9 @@ public:
 
   const char *GetName() const { return m_name.c_str(); }
 
+  /// A unique marker string that is placed in front of the user expression
+  /// inside the wrapped expression source. This is used to find back the
+  /// position of the raw user input in the wrapped source.
   static std::string getExprMarker() {
     return "/*LLDB_EXPR*/";
   }
