@@ -239,9 +239,101 @@ class CommandLineCompletionTestCase(TestBase):
     def test_symbol_name(self):
         self.build()
         self.dbg.CreateTarget(self.getBuildArtifact("a.out"))
-        self.complete_from_to('breakpoint set -n Fo',
-                              'breakpoint set -n Foo::Bar(int,\\ int)',
+        self.complete_from_to('breakpoint set -n DummyClassForBreakpoints',
+                              'breakpoint set -n DummyClassForBreakpoints::BreakpointMemberMethod(int,\\ int)',
                               turn_off_re_match=True)
+
+    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24489")
+    def test_expr_completion(self):
+        self.build()
+        self.main_source = "main.cpp"
+        self.main_source_spec = lldb.SBFileSpec(self.main_source)
+        self.dbg.CreateTarget(self.getBuildArtifact("a.out"))
+        (target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(self,
+                                          '// Break here', self.main_source_spec)
+        self.complete_from_to('expr f.BreakpointMember',
+                              'expr f.BreakpointMemberMethod',
+                              turn_off_re_match=True)
+
+        # Completing local variables
+        self.complete_from_to('expr some_ex',
+                              'expr some_expr',
+                              turn_off_re_match=True)
+
+        # Completing functions
+        self.complete_from_to('expr some_expr.FooNoArgs',
+                              'expr some_expr.FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooWithArgs',
+                              'expr some_expr.FooWithArgsBar(',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooUnderscore',
+                              'expr some_expr.FooUnderscoreBar_()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.FooNumbers',
+                              'expr some_expr.FooNumbersBar1()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr.MemberVariab',
+                              'expr some_expr.MemberVariableBar',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr Expr::StaticMemberMethod',
+                              'expr Expr::StaticMemberMethodBar()',
+                              turn_off_re_match=True)
+
+        # Completing member variables
+        self.complete_from_to('expr some_expr.StaticMemberMethod',
+                              'expr some_expr.StaticMemberMethodBar()',
+                              turn_off_re_match=True)
+
+
+        # Test with spaces
+        self.complete_from_to('expr some_expr .FooNoArgs',
+                              'expr some_expr .FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr. FooNoArgs',
+                              'expr some_expr. FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr some_expr . FooNoArgs',
+                              'expr some_expr . FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr Expr :: StaticMemberMethod',
+                              'expr Expr :: StaticMemberMethodBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr Expr ::StaticMemberMethod',
+                              'expr Expr ::StaticMemberMethodBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr Expr:: StaticMemberMethod',
+                              'expr Expr:: StaticMemberMethodBar()',
+                              turn_off_re_match=True)
+
+        # Addrof and deref
+        self.complete_from_to('expr (*(&some_expr)).FooNoArgs',
+                              'expr (*(&some_expr)).FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (*(&some_expr)) .FooNoArgs',
+                              'expr (*(&some_expr)) .FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (* (&some_expr)) .FooNoArgs',
+                              'expr (* (&some_expr)) .FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (* (& some_expr)) .FooNoArgs',
+                              'expr (* (& some_expr)) .FooNoArgsBar()',
+                              turn_off_re_match=True)
+
+        # Addrof and deref (part 2)
+        self.complete_from_to('expr (&some_expr)->FooNoArgs',
+                              'expr (&some_expr)->FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (&some_expr) ->FooNoArgs',
+                              'expr (&some_expr) ->FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (&some_expr) -> FooNoArgs',
+                              'expr (&some_expr) -> FooNoArgsBar()',
+                              turn_off_re_match=True)
+        self.complete_from_to('expr (&some_expr)-> FooNoArgs',
+                              'expr (&some_expr)-> FooNoArgsBar()',
+                              turn_off_re_match=True)
+
 
     def complete_from_to(self, str_input, patterns, turn_off_re_match=False):
         """Test that the completion mechanism completes str_input to patterns,
