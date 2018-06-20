@@ -395,9 +395,10 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
     std::string arg;
     input.GetCommandString(arg);
 
+    if (m_interpreter.GetExecutionContext().GetFramePtr() == nullptr)
+      m_interpreter.UpdateExecutionContext(nullptr);
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
 
-    // TODO: Is this different than the command_options language.
     auto language = exe_ctx.GetFrameRef().GetLanguage();
 
     Status error;

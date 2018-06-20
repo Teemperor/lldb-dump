@@ -581,7 +581,8 @@ namespace {
       return prefix;
     }
 
-    std::string mergeCompletionWithExisting(StringRef existing, unsigned pos, StringRef completion) {
+    std::string mergeCompletionWithExisting(StringRef existing, unsigned pos,
+                                            StringRef completion) {
       StringRef prefix = existing.substr(0, pos);
       prefix = removeLastToken(prefix);
       prefix = dropUnrelatedFrontTokens(prefix);
@@ -638,6 +639,13 @@ namespace {
         switch(R.Kind) {
           case CodeCompletionResult::RK_Declaration:
             ToInsert = R.Declaration->getNameAsString();
+            if (const FunctionDecl *F = dyn_cast<FunctionDecl>(R.Declaration)) {
+              if (F->getNumParams() == 0) {
+                ToInsert += "()";
+              } else {
+                ToInsert += "(";
+              }
+            }
             break;
           case CodeCompletionResult::RK_Keyword:
             ToInsert = R.Keyword;
