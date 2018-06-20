@@ -150,6 +150,26 @@ public:
 
 private:
 
+  //------------------------------------------------------------------
+  /// Parses the expression.
+  ///
+  /// @param[in] diagnostic_manager
+  ///     The diagnostic manager that should receive the diagnostics
+  ///     from the parsing process.
+  ///
+  /// @param[in] completion
+  ///     The completion consumer that should be used during parsing
+  ///     (or a nullptr if no consumer should be attached).
+  ///
+  /// @param[in] completion_line
+  ///     The line in which the completion marker should be placed.
+  ///
+  /// @param[in] completion_column
+  ///     The column in which the completion marker should be placed.
+  ///
+  /// @return
+  ///    The number of parsing errors.
+  //-------------------------------------------------------------------
   unsigned ParseInternal(DiagnosticManager &diagnostic_manager,
                          clang::CodeCompleteConsumer *completion = nullptr,
                          unsigned completion_line = 0,
