@@ -1,5 +1,5 @@
 """
-Test the lldb command line completion mechanism for expr.
+Test the lldb command line completion mechanism for the 'expr' command.
 """
 
 from __future__ import print_function
