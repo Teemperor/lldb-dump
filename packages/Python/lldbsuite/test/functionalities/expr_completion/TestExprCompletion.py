@@ -80,7 +80,7 @@ class CommandLineExprCompletionTestCase(TestBase):
 
         # Completion expr without spaces
         # This is a bit awkward looking for the user, but that's how
-        # the completion API works.
+        # the completion API works at the moment.
         self.completions_contain('expr 1+',
                                  ['1+some_expr', "1+static_cast"])
 
@@ -148,6 +148,16 @@ class CommandLineExprCompletionTestCase(TestBase):
         self.complete_from_to('expr SomeIntVar + SomeIntV',
                               'expr SomeIntVar + SomeIntVar')
 
+        # Multiple statements
+        self.complete_from_to('expr long LocalVariable = 0; LocalVaria',
+                              'expr long LocalVariable = 0; LocalVariable')
+
+        # Custom Decls
+        self.complete_from_to('expr auto l = [](int LeftHandSide, int bx){ return LeftHandS',
+                              'expr auto l = [](int LeftHandSide, int bx){ return LeftHandSide')
+        self.complete_from_to('expr struct LocalStruct { long MemberName; } ; LocalStruct S; S.Mem',
+                              'expr struct LocalStruct { long MemberName; } ; LocalStruct S; S.MemberName')
+
         # Completing function call arguments
         self.complete_from_to('expr some_expr.FooWithArgsBar(some_exp',
                               'expr some_expr.FooWithArgsBar(some_expr')
@@ -196,8 +206,8 @@ class CommandLineExprCompletionTestCase(TestBase):
         (target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(self,
                                           '// Break here', self.main_source_spec)
 
-        # 2000 seems enough to not make this test longer than other test cases (around 10s on
-        # my system) and still test enough cases to stress the completion a fair bit.
+        # 2000 seems enough to make this test about the same length as the other test cases
+        # (which around 10s on my system).
         for i in range(2000):
             str_input = self.generate_random_expr(i)
             interp = self.dbg.GetCommandInterpreter()
