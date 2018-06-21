@@ -600,15 +600,39 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
+
+//------------------------------------------------------------------
+/// Converts an absolute position inside a given code string into
+/// a column/line pair.
+///
+/// @param[in] abs_pos
+///     A absolute position in the code string that we want to convert
+///     to a column/line pair.
+///
+/// @param[in] code
+///     A multi-line string usually representing source code.
+///
+/// @param[out] line
+///     The line in the code that contains the given absolute position.
+///     The first line in the string is indexed as 1.
+///
+/// @param[out] column
+///     The column in the line that contains the absolute position.
+///     The first character in a line is indexed as 0.
+//------------------------------------------------------------------
 static void AbsPosToLineColumnPos(unsigned abs_pos, llvm::StringRef code,
-                               unsigned &line, unsigned &column) {
+                                  unsigned &line, unsigned &column) {
   // Reset to code position to beginning of the file.
   line = 1;
   column = 0;
 
+  assert(abs_pos <= code.size() && "Absolute position outside code string?");
+
   // We have to walk up to the position and count lines/columns.
   for (std::size_t i = 0; i < abs_pos; ++i) {
-    // If we hit a line break, we go back to column 0.
+    // If we hit a line break, we go back to column 0 and enter a new line.
+    // We only handle \n because that's what we internally use to make new
+    // lines for our temporary code strings.
     if (code[i] == '\n') {
       ++line;
       column = 0;
@@ -681,7 +705,7 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
     AbsPosToLineColumnPos(*m_user_expression_start_pos, m_transformed_text,
                           user_expr_line, user_expr_column);
   else
-      return false;
+    return false;
 
   // The actual column where we have to complete is the start column of the
   // user expression + the offset inside the user code that we were given.
