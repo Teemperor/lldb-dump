@@ -204,6 +204,26 @@ public:
   bool CheckTopIOHandlerTypes(IOHandler::Type top_type,
                               IOHandler::Type second_top_type);
 
+  //------------------------------------------------------------------
+  /// Guard class that delays the output printing from the given debugger
+  /// until the end of the scope. Useful if you aquire any IOHandler locks
+  /// in the current scope and also call code that might print via an IOHandler
+  /// (which could lead to deadlocks).
+  ///
+  /// This guard can be used in nested scopes. Multiple guards on the
+  /// same debugger behave the same as if only the top-most guard
+  /// requested to delay the messages.
+  ///
+  /// @see EnableDelayedPrinting() and TryFlushingDelayedMessages().
+  //------------------------------------------------------------------
+  struct MessageDelayScope {
+    Debugger &m_debugger;
+    MessageDelayScope(Debugger &d) : m_debugger(d) {
+      m_debugger.EnableDelayedPrinting();
+    }
+    ~MessageDelayScope() { m_debugger.TryFlushingDelayedMessages(); }
+  };
+
   void PrintAsync(const char *s, size_t len, bool is_stdout);
 
   ConstString GetTopIOHandlerControlSequence(char ch);
@@ -416,6 +436,74 @@ private:
   // Use Debugger::CreateInstance() to get a shared pointer to a new debugger
   // object
   Debugger(lldb::LogOutputCallback m_log_callback, void *baton);
+
+  //------------------------------------------------------------------
+  /// A message sent via PrintAsync that we store to delay the actual
+  /// call until later.
+  //------------------------------------------------------------------
+  struct DelayedMessage {
+    DelayedMessage(std::string data, bool for_stdout)
+        : m_data(data), m_for_stdout(for_stdout) {}
+    std::string m_data;
+    bool m_for_stdout;
+  };
+
+  //------------------------------------------------------------------
+  /// Starts delaying any calls to PrintAsync until a matching call
+  /// to FlushDelayedMessages occurs. This function should only be
+  /// called before a matching call to FlushDelayedMessages.
+  ///
+  /// This method is intentionally private. Use MessageDelayScope to
+  /// call this method (and the matching FlushDelayedMessage()) method
+  /// below.
+  //------------------------------------------------------------------
+  void EnableDelayedPrinting() {
+    std::lock_guard<std::mutex> guard(m_delayed_output_mutex);
+    ++m_delayed_output_counter;
+  }
+
+  //------------------------------------------------------------------
+  /// Tries to flush any delayed messages to PrintAsync. This might
+  /// not be possible if it was requested by multiple users to
+  /// delay messages and not all have given consent at this point for
+  /// forwarding the messages.
+  //------------------------------------------------------------------
+  void TryFlushingDelayedMessages() {
+    // We copy the buffer here. We do *not* want to call PrintAsync (or
+    // actually anything else) while we own this lock.
+    std::vector<DelayedMessage> buffer_to_send;
+    bool should_print_delayed = false;
+    {
+      std::lock_guard<std::mutex> guard(m_delayed_output_mutex);
+      buffer_to_send = std::move(m_delayed_output);
+      m_delayed_output.clear();
+      --m_delayed_output_counter;
+      // 0 means that all users we have have consented that we can now foward
+      // our delayed messages to the IOHandlers.
+      if (m_delayed_output_counter == 0)
+        should_print_delayed = true;
+    }
+    if (!should_print_delayed)
+      return;
+    // Forward all cached messages to the IOHandlers.
+    for (const auto &msg : buffer_to_send) {
+      PrintAsync(msg.m_data.data(), msg.m_data.size(), msg.m_for_stdout);
+    }
+  }
+
+  /// This mutex protects *only* m_async_buffer and m_should_buffer_async.
+  std::mutex m_delayed_output_mutex;
+  /// The list of delayed messages in the order in which they arrived.
+  /// @note Protected by m_delayed_output_mutex.
+  std::vector<DelayedMessage> m_delayed_output;
+  /// This counter keeps track of how many users have requested that we delay
+  /// the forwarding of calls to PrintAsync to the IOHandlers. If the counter
+  /// is 0, then it's safe to directly forward all calls to PrintAsync to the
+  /// IOHandlers. If the counter is *not* 0, then all calls to PrintAsync
+  /// should be cached until the counter is 0 again.
+  /// @see EnableDelayedPrinting() and TryFlushingDelayedMessages().
+  /// @note Protected by m_delayed_output_mutex.
+  unsigned m_delayed_output_counter = 0;
 
   DISALLOW_COPY_AND_ASSIGN(Debugger);
 };

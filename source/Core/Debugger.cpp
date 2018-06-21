@@ -985,6 +985,21 @@ bool Debugger::CheckTopIOHandlerTypes(IOHandler::Type top_type,
 }
 
 void Debugger::PrintAsync(const char *s, size_t len, bool is_stdout) {
+  bool ShouldForward = false;
+  {
+    // We check if any user requested to delay output to a later time
+    // (which is designated by m_delayed_output_counter being not 0).
+    std::lock_guard<std::mutex> guard(m_delayed_output_mutex);
+    if (m_delayed_output_counter != 0) {
+      // We want to delay messages, so push them to the buffer.
+      m_delayed_output.emplace_back(std::string(s, len), is_stdout);
+    } else {
+      // Allow direct forwarding to the IOHandlers.
+      ShouldForward = true;
+    }
+  }
+  if (!ShouldForward)
+    return;
   lldb::StreamFileSP stream = is_stdout ? GetOutputFile() : GetErrorFile();
   m_input_reader_stack.PrintAsync(stream.get(), s, len);
 }

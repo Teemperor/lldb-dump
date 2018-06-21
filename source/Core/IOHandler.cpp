@@ -348,6 +348,8 @@ void IOHandlerEditline::Deactivate() {
 }
 
 bool IOHandlerEditline::GetLine(std::string &line, bool &interrupted) {
+  Debugger::MessageDelayScope buffer_scope(m_debugger);
+
 #ifndef LLDB_DISABLE_LIBEDIT
   if (m_editline_ap) {
     return m_editline_ap->GetLine(line, interrupted);
