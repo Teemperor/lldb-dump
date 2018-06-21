@@ -409,7 +409,7 @@ llvm::Optional<lldb::LanguageType> ClangUserExpression::GetLanguageForExpr(
                                                            original_start,
                                                            original_end);
     if (found_bounds) {
-      m_completion_pos = original_start;
+      m_user_expression_start_pos = original_start;
     }
   }
   return lang_type;
@@ -668,22 +668,25 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
 
   ClangExpressionParser parser(exe_scope, *this, false);
 
-  // We have a needle inside the transformed code that points us to the place
-  // where the source code wrapper placed our user input. We trust that the
-  // user input itself isn't modified (e.g. the nth character starting from the
-  // start of the user input inside the wrapper is also the nth character in
-  // the actual user input).
-  // We find the needle here to correctly find the offset where the Clang Sema
-  // should start its completion logic.
-  unsigned complete_line, complete_column_offset;
-  if (m_completion_pos.hasValue())
-    AbsPosToLineColumnPos(*m_completion_pos, m_transformed_text, complete_line,
-                          complete_column_offset);
+  // We have to find the source code location where the user text is inside
+  // the transformed expression code. When creating the transformed text, we
+  // already stored the absolute position in the m_transformed_text string. The
+  // only thing left to do is to transform it into the line:column format that
+  // Clang expects.
+
+  // The line and column of the user expression inside the transformed source
+  // code.
+  unsigned user_expr_line, user_expr_column;
+  if (m_user_expression_start_pos.hasValue())
+    AbsPosToLineColumnPos(*m_user_expression_start_pos, m_transformed_text,
+                          user_expr_line, user_expr_column);
   else
       return false;
 
-  parser.Complete(matches, complete_line, complete_pos + complete_column_offset,
-                  complete_pos);
+  // The actual column where we have to complete is the start column of the
+  // user expression + the offset inside the user code that we were given.
+  const unsigned completion_column = user_expr_column + complete_pos;
+  parser.Complete(matches, user_expr_line, completion_column, complete_pos);
 
   return true;
 }
