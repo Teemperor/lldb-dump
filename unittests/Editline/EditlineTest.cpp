@@ -17,8 +17,15 @@
 #include <memory>
 #include <thread>
 
+#include <lldb/Initialization/SystemLifetimeManager.h>
+
+#include <lldb/Core/Debugger.h>
+#include <lldb/API/SBDebugger.h>
+#include <lldb/Utility/CleanUp.h>
+
 #include "gtest/gtest.h"
 
+#include "API/SystemInitializerFull.h"
 #include "lldb/Host/Editline.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/PseudoTerminal.h"
@@ -122,10 +129,16 @@ EditlineAdapter::EditlineAdapter()
   if (*_el_slave_file == nullptr)
     return;
 
+
+  lldb::SBDebugger::Initialize();
+
+  lldb::DebuggerSP debugger = Debugger::CreateInstance();
+
   // Create an Editline instance.
   _editline_sp.reset(new lldb_private::Editline("gtest editor", *_el_slave_file,
                                                 *_el_slave_file,
-                                                *_el_slave_file, false));
+                                                *_el_slave_file, false,
+                                                *debugger));
   _editline_sp->SetPrompt("> ");
 
   // Hookup our input complete callback.

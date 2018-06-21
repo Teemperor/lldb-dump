@@ -11,6 +11,8 @@
 #include <iostream>
 #include <limits.h>
 
+
+#include "lldb/Core/Debugger.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/Editline.h"
 #include "lldb/Host/Host.h"
@@ -507,9 +509,14 @@ int Editline::GetCharacter(EditLineGetCharType *c) {
     // indefinitely. This gives a chance for someone to interrupt us. After
     // Read returns, immediately lock the mutex again and check if we were
     // interrupted.
+    int read_count;
     m_output_mutex.unlock();
-    int read_count = m_input_connection.Read(&ch, 1, llvm::None, status, NULL);
+    {
+      lldb_private::Debugger::DisableMessageDelayScope guard(m_debugger);
+      read_count = m_input_connection.Read(&ch, 1, llvm::None, status, NULL);
+    }
     m_output_mutex.lock();
+
     if (m_editor_status == EditorStatus::Interrupted) {
       while (read_count > 0 && status == lldb::eConnectionStatusSuccess)
         read_count = m_input_connection.Read(&ch, 1, llvm::None, status, NULL);
@@ -1128,10 +1135,12 @@ Editline *Editline::InstanceFor(EditLine *editline) {
 }
 
 Editline::Editline(const char *editline_name, FILE *input_file,
-                   FILE *output_file, FILE *error_file, bool color_prompts)
+                   FILE *output_file, FILE *error_file, bool color_prompts,
+                   Debugger &debugger)
     : m_editor_status(EditorStatus::Complete), m_color_prompts(color_prompts),
       m_input_file(input_file), m_output_file(output_file),
-      m_error_file(error_file), m_input_connection(fileno(input_file), false) {
+      m_error_file(error_file), m_input_connection(fileno(input_file), false),
+      m_debugger(debugger) {
   // Get a shared history instance
   m_editor_name = (editline_name == nullptr) ? "lldb-tmp" : editline_name;
   m_history_sp = EditlineHistory::GetHistory(m_editor_name);
@@ -1264,6 +1273,14 @@ bool Editline::GetLine(std::string &line, bool &interrupted) {
   m_input_lines = std::vector<EditLineStringType>();
   m_input_lines.insert(m_input_lines.begin(), EditLineConstString(""));
 
+  // For safety reasons let's delay all messages that might be printed to the
+  // output until we are done with this method. Printing to the standard output
+  // while we are working with EditLine could cause problems. Especially any
+  // held locks that are needed for printing to the console are problematic. We
+  // take those locks here because we want to do console output and they might
+  // be requested by any lldb code that will be called from here (possibly in
+  // another thread).
+  Debugger::MessageDelayScope msg_guard(m_debugger);
   std::lock_guard<std::mutex> guard(m_output_mutex);
 
   lldbassert(m_editor_status != EditorStatus::Editing);
@@ -1309,6 +1326,14 @@ bool Editline::GetLines(int first_line_number, StringList &lines,
   m_input_lines = std::vector<EditLineStringType>();
   m_input_lines.insert(m_input_lines.begin(), EditLineConstString(""));
 
+  // For safety reasons let's delay all messages that might be printed to the
+  // output until we are done with this method. Printing to the standard output
+  // while we are working with EditLine could cause problems. Especially any
+  // held locks that are needed for printing to the console are problematic. We
+  // take those locks here because we want to do console output and they might
+  // be requested by any lldb code that will be called from here (possibly in
+  // another thread).
+  Debugger::MessageDelayScope msg_guard(m_debugger);
   std::lock_guard<std::mutex> guard(m_output_mutex);
   // Begin the line editing loop
   DisplayInput();

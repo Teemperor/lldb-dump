@@ -48,6 +48,9 @@
 #include "lldb/Utility/StreamCallback.h"
 #include "lldb/Utility/StreamString.h"
 
+
+#include "llvm/Support/Signals.h"
+
 #if defined(_WIN32)
 #include "lldb/Host/windows/PosixApi.h" // for PATH_MAX
 #endif
@@ -797,6 +800,34 @@ Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton)
     SetUseColor(false);
 }
 
+void Debugger::TryFlushingDelayedMessages() {
+  // We copy the buffer here. We do *not* want to call PrintAsync (or
+  // anything else) while we own this lock.
+  std::vector<DelayedMessage> buffer_to_send;
+  {
+    std::lock_guard<std::mutex> guard(m_delayed_output_mutex);
+    buffer_to_send = std::move(m_delayed_output);
+    m_delayed_output.clear();
+    // It's an error if we call this method before EnableDelayedPrinting.
+    if (m_delayed_output_counter == 0) {
+
+        llvm::sys::PrintStackTrace(llvm::outs());
+        llvm::outs().flush();
+      }
+    assert(m_delayed_output_counter > 0);
+    --m_delayed_output_counter;
+    // 0 means that all users we have have consented that we can now forward
+    // our delayed messages to the IOHandlers. Other values mean we that can't
+    // forward the delayed messages yet.
+    if (m_delayed_output_counter != 0)
+      return;
+  }
+  // Forward all cached messages to the IOHandlers.
+  for (const auto &msg : buffer_to_send) {
+    PrintAsync(msg.m_data.data(), msg.m_data.size(), msg.m_for_stdout);
+  }
+}
+
 Debugger::~Debugger() { Clear(); }
 
 void Debugger::Clear() {
@@ -985,6 +1016,16 @@ bool Debugger::CheckTopIOHandlerTypes(IOHandler::Type top_type,
 }
 
 void Debugger::PrintAsync(const char *s, size_t len, bool is_stdout) {
+  // We check if any user requested to delay output to a later time
+  // (which is designated by m_delayed_output_counter being not 0).
+  {
+    std::lock_guard<std::mutex> guard(m_delayed_output_mutex);
+    if (m_delayed_output_counter != 0) {
+      // We want to delay messages, so push them to the buffer.
+      m_delayed_output.emplace_back(std::string(s, len), is_stdout);
+      return;
+    }
+  }
   lldb::StreamFileSP stream = is_stdout ? GetOutputFile() : GetErrorFile();
   m_input_reader_stack.PrintAsync(stream.get(), s, len);
 }

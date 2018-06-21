@@ -58,6 +58,7 @@
 #include "lldb/Utility/FileSpec.h"
 
 namespace lldb_private {
+  class Debugger;
 namespace line_editor {
 
 // type alias's to help manage 8 bit and wide character versions of libedit
@@ -146,7 +147,7 @@ using namespace line_editor;
 class Editline {
 public:
   Editline(const char *editor_name, FILE *input_file, FILE *output_file,
-           FILE *error_file, bool color_prompts);
+           FILE *error_file, bool color_prompts, lldb_private::Debugger &debugger);
 
   ~Editline();
 
@@ -359,6 +360,7 @@ private:
   CompleteCallbackType m_completion_callback = nullptr;
   void *m_completion_callback_baton = nullptr;
 
+  lldb_private::Debugger &m_debugger;
   std::mutex m_output_mutex;
 };
 }
