@@ -286,13 +286,13 @@ bool ExpressionSourceCode::GetText(std::string &text,
     std::string tagged_body;
     switch (wrapping_language) {
     default:
-      tagged_body = getExprMarker() + m_body;
+      tagged_body = m_body;
       break;
     case lldb::eLanguageTypeC:
     case lldb::eLanguageTypeC_plus_plus:
     case lldb::eLanguageTypeObjC:
       tagged_body.append(c_start_marker);
-      tagged_body.append(getExprMarker() + m_body);
+      tagged_body.append(m_body);
       tagged_body.append(c_end_marker);
       break;
     }

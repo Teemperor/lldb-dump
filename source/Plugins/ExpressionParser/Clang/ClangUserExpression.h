@@ -200,6 +200,7 @@ private:
     lldb::TargetSP m_target_sp;
   };
 
+  llvm::Optional<unsigned> m_completion_pos;
   ResultDelegate m_result_delegate;
 };
 

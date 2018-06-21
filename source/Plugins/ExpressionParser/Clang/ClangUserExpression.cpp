@@ -402,6 +402,15 @@ llvm::Optional<lldb::LanguageType> ClangUserExpression::GetLanguageForExpr(
                                    "couldn't construct expression body");
       return llvm::Optional<lldb::LanguageType>();
     }
+    std::size_t original_start;
+    std::size_t original_end;
+    bool found_bounds = source_code->GetOriginalBodyBounds(m_transformed_text,
+                                                           lang_type,
+                                                           original_start,
+                                                           original_end);
+    if (found_bounds) {
+      m_completion_pos = original_start;
+    }
   }
   return lang_type;
 }
@@ -591,23 +600,14 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   return true;
 }
 
-LLVM_NODISCARD
-static bool FindNeedlePosition(llvm::StringRef needle,llvm::StringRef code,
+static void AbsPosToLineColumnPos(unsigned abs_pos, llvm::StringRef code,
                                unsigned &line, unsigned &column) {
   // Reset to code position to beginning of the file.
   line = 1;
   column = 0;
 
-  // We have to search the needle and we have to keep track of lines/columns.
-  for (std::size_t i = 0; i < code.size(); ++i) {
-    llvm::StringRef lookahead = code.substr(i, needle.size());
-
-    // If we found the needle, we set the completion pos behind that.
-    if (lookahead == needle) {
-      column += needle.size();
-      return true;
-    }
-
+  // We have to walk up to the position and count lines/columns.
+  for (std::size_t i = 0; i < abs_pos; ++i) {
     // If we hit a line break, we go back to column 0.
     if (code[i] == '\n') {
       ++line;
@@ -616,8 +616,6 @@ static bool FindNeedlePosition(llvm::StringRef needle,llvm::StringRef code,
     }
     ++column;
   }
-  // We didn't find the needle and should inform the caller.
-  return false;
 }
 
 bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
@@ -678,10 +676,11 @@ bool ClangUserExpression::Complete(ExecutionContext &exe_ctx,
   // We find the needle here to correctly find the offset where the Clang Sema
   // should start its completion logic.
   unsigned complete_line, complete_column_offset;
-  if (!FindNeedlePosition(ExpressionSourceCode::getExprMarker(),
-                          m_transformed_text, complete_line,
-                          complete_column_offset))
-    return false;
+  if (m_completion_pos.hasValue())
+    AbsPosToLineColumnPos(*m_completion_pos, m_transformed_text, complete_line,
+                          complete_column_offset);
+  else
+      return false;
 
   parser.Complete(matches, complete_line, complete_pos + complete_column_offset,
                   complete_pos);
