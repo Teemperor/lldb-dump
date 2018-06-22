@@ -30,7 +30,7 @@ public:
 
   ~CommandObjectHelp() override;
 
-  int HandleCompletion(Args &input, int &cursor_index,
+  int HandleCompletion(Args &input, std::size_t cursor_pos, int &cursor_index,
                        int &cursor_char_position, int match_start_point,
                        int max_return_elements, bool &word_complete,
                        StringList &matches) override;

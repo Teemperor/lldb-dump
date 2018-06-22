@@ -99,7 +99,7 @@ bool CommandObjectRegexCommand::AddRegexCommand(const char *re_cstr,
   return false;
 }
 
-int CommandObjectRegexCommand::HandleCompletion(Args &input, int &cursor_index,
+int CommandObjectRegexCommand::HandleCompletion(Args &input, std::size_t cursor_pos, int &cursor_index,
                                                 int &cursor_char_position,
                                                 int match_start_point,
                                                 int max_return_elements,

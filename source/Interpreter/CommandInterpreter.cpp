@@ -1681,7 +1681,7 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
     int cursor_index = 0;
     int cursor_char_position = strlen(command_args.GetArgumentAtIndex(0));
     bool word_complete;
-    num_matches = HandleCompletionMatches(command_args, cursor_index,
+    num_matches = HandleCompletionMatches(command_args, command_string.length(), cursor_index,
                                           cursor_char_position, 0, -1,
                                           word_complete, matches);
 
@@ -1713,7 +1713,7 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
 }
 
 int CommandInterpreter::HandleCompletionMatches(
-    Args &parsed_line, int &cursor_index, int &cursor_char_position,
+    Args &parsed_line, std::size_t cursor_pos, int &cursor_index, int &cursor_char_position,
     int match_start_point, int max_return_elements, bool &word_complete,
     StringList &matches) {
   int num_command_matches = 0;
@@ -1763,7 +1763,7 @@ int CommandInterpreter::HandleCompletionMatches(
       parsed_line.Shift();
       cursor_index--;
       num_command_matches = command_object->HandleCompletion(
-          parsed_line, cursor_index, cursor_char_position, match_start_point,
+          parsed_line, cursor_pos, cursor_index, cursor_char_position, match_start_point,
           max_return_elements, word_complete, matches);
     }
   }
@@ -1782,6 +1782,7 @@ int CommandInterpreter::HandleCompletion(
   Args partial_parsed_line(
       llvm::StringRef(current_line, cursor - current_line));
 
+  std::size_t cursor_pos = cursor - current_line;
   // Don't complete comments, and if the line we are completing is just the
   // history repeat character, substitute the appropriate history line.
   const char *first_arg = parsed_line.GetArgumentAtIndex(0);
@@ -1835,7 +1836,7 @@ int CommandInterpreter::HandleCompletion(
   lldbassert(max_return_elements == -1);
   bool word_complete;
   num_command_matches = HandleCompletionMatches(
-      parsed_line, cursor_index, cursor_char_position, match_start_point,
+      parsed_line, cursor_pos, cursor_index, cursor_char_position, match_start_point,
       max_return_elements, word_complete, matches);
 
   if (num_command_matches <= 0)

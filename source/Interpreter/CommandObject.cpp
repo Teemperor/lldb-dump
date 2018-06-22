@@ -260,7 +260,7 @@ void CommandObject::Cleanup() {
     m_api_locker.unlock();
 }
 
-int CommandObject::HandleCompletion(Args &input, int &cursor_index,
+int CommandObject::HandleCompletion(Args &input, std::size_t cursor_pos, int &cursor_index,
                                     int &cursor_char_position,
                                     int match_start_point,
                                     int max_return_elements,

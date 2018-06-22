@@ -209,7 +209,7 @@ bool CommandObjectHelp::DoExecute(Args &command, CommandReturnObject &result) {
   return result.Succeeded();
 }
 
-int CommandObjectHelp::HandleCompletion(Args &input, int &cursor_index,
+int CommandObjectHelp::HandleCompletion(Args &input, std::size_t cursor_pos, int &cursor_index,
                                         int &cursor_char_position,
                                         int match_start_point,
                                         int max_return_elements,
@@ -218,7 +218,7 @@ int CommandObjectHelp::HandleCompletion(Args &input, int &cursor_index,
   // Return the completions of the commands in the help system:
   if (cursor_index == 0) {
     return m_interpreter.HandleCompletionMatches(
-        input, cursor_index, cursor_char_position, match_start_point,
+        input, cursor_pos, cursor_index, cursor_char_position, match_start_point,
         max_return_elements, word_complete, matches);
   } else {
     CommandObject *cmd_obj = m_interpreter.GetCommandObject(input[0].ref);
@@ -231,11 +231,11 @@ int CommandObjectHelp::HandleCompletion(Args &input, int &cursor_index,
       input.Shift();
       cursor_index--;
       return cmd_obj->HandleCompletion(
-          input, cursor_index, cursor_char_position, match_start_point,
+          input, cursor_pos, cursor_index, cursor_char_position, match_start_point,
           max_return_elements, word_complete, matches);
     } else {
       return m_interpreter.HandleCompletionMatches(
-          input, cursor_index, cursor_char_position, match_start_point,
+          input, cursor_pos, cursor_index, cursor_char_position, match_start_point,
           max_return_elements, word_complete, matches);
     }
   }
