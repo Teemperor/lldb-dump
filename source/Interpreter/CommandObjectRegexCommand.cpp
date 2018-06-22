@@ -99,12 +99,10 @@ bool CommandObjectRegexCommand::AddRegexCommand(const char *re_cstr,
   return false;
 }
 
-int CommandObjectRegexCommand::HandleCompletion(Args &input, int &cursor_index,
-                                                int &cursor_char_position,
-                                                int match_start_point,
-                                                int max_return_elements,
-                                                bool &word_complete,
-                                                StringList &matches) {
+int CommandObjectRegexCommand::HandleCompletion(
+    Args &input, std::size_t cursor_pos, int &cursor_index,
+    int &cursor_char_position, int match_start_point, int max_return_elements,
+    bool &word_complete, StringList &matches) {
   if (m_completion_type_mask) {
     std::string completion_str(input.GetArgumentAtIndex(cursor_index),
                                cursor_char_position);

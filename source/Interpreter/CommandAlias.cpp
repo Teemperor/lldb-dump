@@ -114,15 +114,15 @@ bool CommandAlias::WantsCompletion() {
   return false;
 }
 
-int CommandAlias::HandleCompletion(Args &input, int &cursor_index,
-                                   int &cursor_char_position,
+int CommandAlias::HandleCompletion(Args &input, std::size_t cursor_pos,
+                                   int &cursor_index, int &cursor_char_position,
                                    int match_start_point,
                                    int max_return_elements, bool &word_complete,
                                    StringList &matches) {
   if (IsValid())
     return m_underlying_command_sp->HandleCompletion(
-        input, cursor_index, cursor_char_position, match_start_point,
-        max_return_elements, word_complete, matches);
+        input, cursor_pos, cursor_index, cursor_char_position,
+        match_start_point, max_return_elements, word_complete, matches);
   return -1;
 }
 

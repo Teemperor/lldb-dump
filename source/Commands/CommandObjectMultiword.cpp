@@ -186,12 +186,10 @@ void CommandObjectMultiword::GenerateHelpText(Stream &output_stream) {
                            "'help <command> <subcommand>'.\n");
 }
 
-int CommandObjectMultiword::HandleCompletion(Args &input, int &cursor_index,
-                                             int &cursor_char_position,
-                                             int match_start_point,
-                                             int max_return_elements,
-                                             bool &word_complete,
-                                             StringList &matches) {
+int CommandObjectMultiword::HandleCompletion(
+    Args &input, std::size_t cursor_pos, int &cursor_index,
+    int &cursor_char_position, int match_start_point, int max_return_elements,
+    bool &word_complete, StringList &matches) {
   // Any of the command matches will provide a complete word, otherwise the
   // individual completers will override this.
   word_complete = true;
@@ -213,8 +211,8 @@ int CommandObjectMultiword::HandleCompletion(Args &input, int &cursor_index,
           cursor_char_position = 0;
           input.AppendArgument(llvm::StringRef());
           return cmd_obj->HandleCompletion(
-              input, cursor_index, cursor_char_position, match_start_point,
-              max_return_elements, word_complete, matches);
+              input, cursor_pos, cursor_index, cursor_char_position,
+              match_start_point, max_return_elements, word_complete, matches);
         }
       }
     }
@@ -229,8 +227,8 @@ int CommandObjectMultiword::HandleCompletion(Args &input, int &cursor_index,
       input.Shift();
       cursor_index--;
       return sub_command_object->HandleCompletion(
-          input, cursor_index, cursor_char_position, match_start_point,
-          max_return_elements, word_complete, matches);
+          input, cursor_pos, cursor_index, cursor_char_position,
+          match_start_point, max_return_elements, word_complete, matches);
     }
   }
 }
@@ -370,17 +368,15 @@ Options *CommandObjectProxy::GetOptions() {
   return nullptr;
 }
 
-int CommandObjectProxy::HandleCompletion(Args &input, int &cursor_index,
-                                         int &cursor_char_position,
-                                         int match_start_point,
-                                         int max_return_elements,
-                                         bool &word_complete,
-                                         StringList &matches) {
+int CommandObjectProxy::HandleCompletion(
+    Args &input, std::size_t cursor_pos, int &cursor_index,
+    int &cursor_char_position, int match_start_point, int max_return_elements,
+    bool &word_complete, StringList &matches) {
   CommandObject *proxy_command = GetProxyCommandObject();
   if (proxy_command)
     return proxy_command->HandleCompletion(
-        input, cursor_index, cursor_char_position, match_start_point,
-        max_return_elements, word_complete, matches);
+        input, cursor_pos, cursor_index, cursor_char_position,
+        match_start_point, max_return_elements, word_complete, matches);
   matches.Clear();
   return 0;
 }
