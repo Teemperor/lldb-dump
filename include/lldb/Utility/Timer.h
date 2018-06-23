@@ -27,11 +27,11 @@ class Timer {
 public:
   class Category {
   public:
-    explicit Category(const char *category_name);
+    explicit Category(llvm::StringRef category_name);
 
   private:
     friend class Timer;
-    const char *m_name;
+    llvm::StringRef m_name;
     std::atomic<uint64_t> m_nanos;
     std::atomic<Category *> m_next;
 

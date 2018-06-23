@@ -40,7 +40,7 @@ static TimerStack &GetTimerStackForCurrentThread() {
   return g_stack;
 }
 
-Timer::Category::Category(const char *cat) : m_name(cat) {
+Timer::Category::Category(llvm::StringRef cat) : m_name(cat) {
   m_nanos.store(0, std::memory_order_release);
   Category *expected = g_categories;
   do {
@@ -102,7 +102,7 @@ void Timer::SetDisplayDepth(uint32_t depth) { g_display_depth = depth; }
  * - returns whether a person is less than another person
  */
 
-typedef std::pair<const char *, uint64_t> TimerEntry;
+typedef std::pair<llvm::StringRef, uint64_t> TimerEntry;
 
 static bool CategoryMapIteratorSortCriterion(const TimerEntry &lhs,
                                              const TimerEntry &rhs) {
@@ -128,5 +128,5 @@ void Timer::DumpCategoryTimes(Stream *s) {
   std::sort(sorted.begin(), sorted.end(), CategoryMapIteratorSortCriterion);
 
   for (const auto &timer : sorted)
-    s->Printf("%.9f sec for %s\n", timer.second / 1000000000., timer.first);
+    s->Printf("%.9f sec for %s\n", timer.second / 1000000000., timer.first.data());
 }
