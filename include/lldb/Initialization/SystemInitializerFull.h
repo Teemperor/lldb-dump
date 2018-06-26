@@ -28,9 +28,6 @@ public:
 
   void Initialize() override;
   void Terminate() override;
-
-private:
-  void InitializeSWIG();
 };
 
 } // namespace lldb_private

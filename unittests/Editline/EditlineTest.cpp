@@ -20,12 +20,11 @@
 #include <lldb/Initialization/SystemLifetimeManager.h>
 
 #include <lldb/Core/Debugger.h>
-#include <lldb/API/SBDebugger.h>
 #include <lldb/Utility/CleanUp.h>
 
 #include "gtest/gtest.h"
 
-#include "API/SystemInitializerFull.h"
+#include "lldb/Initialization/SystemInitializerFull.h"
 #include "lldb/Host/Editline.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/PseudoTerminal.h"
@@ -66,6 +65,9 @@ private:
 class EditlineAdapter {
 public:
   EditlineAdapter();
+  ~EditlineAdapter() {
+    //DebuggerLifetime.Terminate();
+  }
 
   void CloseInput();
 
@@ -94,6 +96,7 @@ private:
   int _pty_master_fd;
   int _pty_slave_fd;
 
+  //SystemLifetimeManager DebuggerLifetime;
   std::unique_ptr<FilePointer> _el_slave_file;
 };
 
@@ -130,7 +133,8 @@ EditlineAdapter::EditlineAdapter()
     return;
 
 
-  lldb::SBDebugger::Initialize();
+//  DebuggerLifetime.Initialize(llvm::make_unique<SystemInitializerFull>(),
+//                              nullptr);
 
   lldb::DebuggerSP debugger = Debugger::CreateInstance();
 
@@ -254,31 +258,33 @@ void EditlineAdapter::ConsumeAllOutput() {
 
 class EditlineTestFixture : public ::testing::Test {
 private:
-  EditlineAdapter _el_adapter;
+  std::unique_ptr<EditlineAdapter> _el_adapter;
   std::shared_ptr<std::thread> _sp_output_thread;
 
 public:
   void SetUp() {
+    _el_adapter.reset(new EditlineAdapter);
     // We need a TERM set properly for editline to work as expected.
     setenv("TERM", "vt100", 1);
 
     // Validate the editline adapter.
-    EXPECT_TRUE(_el_adapter.IsValid());
-    if (!_el_adapter.IsValid())
+    EXPECT_TRUE(_el_adapter->IsValid());
+    if (!_el_adapter->IsValid())
       return;
 
     // Dump output.
     _sp_output_thread.reset(
-        new std::thread([&] { _el_adapter.ConsumeAllOutput(); }));
+        new std::thread([&] { _el_adapter->ConsumeAllOutput(); }));
   }
 
   void TearDown() {
-    _el_adapter.CloseInput();
+    _el_adapter->CloseInput();
     if (_sp_output_thread)
       _sp_output_thread->join();
+    _el_adapter.reset();
   }
 
-  EditlineAdapter &GetEditlineAdapter() { return _el_adapter; }
+  EditlineAdapter &GetEditlineAdapter() { return *_el_adapter; }
 };
 
 TEST_F(EditlineTestFixture, EditlineReceivesSingleLineText) {

@@ -9,6 +9,7 @@ endif ()
 add_lldb_library(lldbInitialization
   SystemInitializerCommon.cpp
   SystemInitializer.cpp
+  SystemInitializerFull.cpp
   SystemLifetimeManager.cpp
 
   LINK_LIBS
