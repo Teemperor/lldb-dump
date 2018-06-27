@@ -123,9 +123,9 @@ EditlineAdapter::EditlineAdapter()
     return;
 
   // Create an Editline instance.
-  _editline_sp.reset(new lldb_private::Editline("gtest editor", *_el_slave_file,
-                                                *_el_slave_file,
-                                                *_el_slave_file, false));
+  _editline_sp.reset(new lldb_private::Editline(
+      "gtest editor", *_el_slave_file, *_el_slave_file, *_el_slave_file, false,
+      nullptr));
   _editline_sp->SetPrompt("> ");
 
   // Hookup our input complete callback.

@@ -313,7 +313,7 @@ IOHandlerEditline::IOHandlerEditline(
   if (use_editline) {
     m_editline_ap.reset(new Editline(editline_name, GetInputFILE(),
                                      GetOutputFILE(), GetErrorFILE(),
-                                     m_color_prompts));
+                                     m_color_prompts, &m_debugger));
     m_editline_ap->SetIsInputCompleteCallback(IsInputCompleteCallback, this);
     m_editline_ap->SetAutoCompleteCallback(AutoCompleteCallback, this);
     // See if the delegate supports fixing indentation
