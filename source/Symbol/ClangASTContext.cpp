@@ -383,6 +383,8 @@ static void ParseLangArgs(LangOptions &Opts, InputKind IK, const char *triple) {
   } else if (IK.isObjectiveC()) {
     Opts.ObjC1 = Opts.ObjC2 = 1;
   }
+  Opts.Modules = true;
+  Opts.ModulesTS = true;
 
   LangStandard::Kind LangStd = LangStandard::lang_unspecified;
 

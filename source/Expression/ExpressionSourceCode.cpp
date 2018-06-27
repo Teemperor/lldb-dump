@@ -300,7 +300,8 @@ bool ExpressionSourceCode::GetText(std::string &text,
     default:
       break;
     case lldb::eLanguageTypeC:
-      wrap_stream.Printf("void                           \n"
+      wrap_stream.Printf(//"import std;\n"
+                         "void                           \n"
                          "%s(void *$__lldb_arg)          \n"
                          "{                              \n"
                          "    %s;                        \n"
@@ -310,7 +311,8 @@ bool ExpressionSourceCode::GetText(std::string &text,
                          tagged_body.c_str());
       break;
     case lldb::eLanguageTypeC_plus_plus:
-      wrap_stream.Printf("void                                   \n"
+      wrap_stream.Printf(//"import std;\n"
+                         "void                                   \n"
                          "$__lldb_class::%s(void *$__lldb_arg)   \n"
                          "{                                      \n"
                          "    %s;                                \n"

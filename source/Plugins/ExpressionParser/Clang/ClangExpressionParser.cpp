@@ -364,6 +364,8 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   // 5. Set language options.
   lldb::LanguageType language = expr.Language();
 
+  m_compiler->getLangOpts().Modules = true;
+  m_compiler->getLangOpts().ModulesTS = true;
   switch (language) {
   case lldb::eLanguageTypeC:
   case lldb::eLanguageTypeC89:
@@ -407,13 +409,17 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   case lldb::eLanguageTypeObjC_plus_plus:
   case lldb::eLanguageTypeUnknown:
   default:
-    m_compiler->getLangOpts().ObjC1 = true;
-    m_compiler->getLangOpts().ObjC2 = true;
-    m_compiler->getLangOpts().CPlusPlus = true;
-    m_compiler->getLangOpts().CPlusPlus11 = true;
-    m_compiler->getHeaderSearchOpts().UseLibcxx = true;
     break;
   }
+
+  m_compiler->getLangOpts().ObjC1 = true;
+  m_compiler->getLangOpts().ObjC2 = true;
+  m_compiler->getLangOpts().CPlusPlus = true;
+  m_compiler->getLangOpts().CPlusPlus11 = true;
+  m_compiler->getHeaderSearchOpts().UseLibcxx = true;
+  m_compiler->getHeaderSearchOpts().AddPath("/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/",
+                                            clang::frontend::IncludeDirGroup::System, false, true);
+  m_compiler->getLangOpts().ImplicitModules = true;
 
   m_compiler->getLangOpts().Bool = true;
   m_compiler->getLangOpts().WChar = true;

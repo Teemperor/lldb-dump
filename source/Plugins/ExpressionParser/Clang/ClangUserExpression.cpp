@@ -133,6 +133,8 @@ void ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Status &err) {
 
   if (clang::CXXMethodDecl *method_decl =
           ClangASTContext::DeclContextGetAsCXXMethodDecl(decl_context)) {
+    if (m_allow_cxx)
+      m_in_cplusplus_method = true;
     if (m_allow_cxx && method_decl->isInstance()) {
       if (m_enforce_valid_object) {
         lldb::VariableListSP variable_list_sp(
