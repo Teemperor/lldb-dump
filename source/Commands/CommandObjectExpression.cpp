@@ -309,68 +309,7 @@ CommandObjectExpression::~CommandObjectExpression() = default;
 
 Options *CommandObjectExpression::GetOptions() { return &m_option_group; }
 
-static std::tuple<std::size_t, std::string> createExprToComplete(const Args &input,
-                                                unsigned cursor_index,
-                                                unsigned cursor_char_position
-                                                ) {
-  // The argument index where our expression starts.
-  std::size_t expr_start_index = 0;
-
-  // Search for the -- which separates arguments and the actual expression.
-  // FIXME: We should try to reuse the actual arg parsing code here, but making
-  // that code reusable is a bigger task than it should be.
-  for (std::size_t i = 0; i < input.size(); ++i) {
-    llvm::StringRef arg = input.GetArgumentAtIndex(i);
-    // We only do the search here if the first argument starts with a dash. The
-    // other args don't really matter. While this sounds wrong, it is how the
-    // parsing logic in DoExecute works
-    if (i == 0 && !arg.startswith("-"))
-      break;
-    if (arg == "--") {
-      expr_start_index = i;
-      break;
-    }
-  }
-
-  // What we insert between each argument to turn it back into the raw command.
-  const std::string arg_separator = " ";
-  bool exit = false;
-  // The raw user command we recreate.
-  std::stringstream command;
-  // The completion marker position inside 'code'.
-  std::size_t marker_pos = 0;
-
-  // We now walk over all arguments and turn them into the raw command string
-  // we were asked to complete.
-  for (std::size_t i = expr_start_index; !exit && i < input.size(); ++i) {
-    llvm::StringRef arg = input.GetArgumentAtIndex(i);
-
-    if (cursor_index == i) {
-      // The final completion marker position is inside this word, so add the
-      // relative position to the one we calculated so far.
-      marker_pos += cursor_char_position;
-      // If we reach the argument that we should complete on, we are done. The
-      // following code doesn't influence the completion.
-      exit = true;
-    }
-
-    // Move the completion marker position behind the current argument (unless
-    // we already found the marker, then we shouldn't move the marker).
-    if (!exit)
-      marker_pos += arg.size() + arg_separator.size();
-
-    // Append the arg with the separator to the user expression.
-    command << arg.str() << arg_separator;
-  }
-  return std::make_pair(marker_pos, command.str());
-}
-
-int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
-                                              int &cursor_char_position,
-                                              int match_start_point,
-                                              int max_return_elements,
-                                              bool &word_complete,
-                                              StringList &matches) {
+int CommandObjectExpression::HandleCompletion(CompletionRequest &request) {
   EvaluateExpressionOptions options;
   options.SetCoerceToId(m_varobj_options.use_objc);
   options.SetLanguage(m_command_options.language);
@@ -399,19 +338,23 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
   if (!target)
     return 0;
 
-  // Rest of the code assumes these are positive ints, so let's exit here
-  // if they are not for some reason.
-  if (cursor_index < 0 || cursor_char_position < 0)
-    return 0;
+  unsigned cursor_pos = request.GetRawCursorPos();
+  llvm::StringRef code = request.GetRawLine();
 
-  // We build the user expression and set the completion marker based on the
-  // information we get from the completion API.
-  // FIXME: The completion API should probably just give us a raw string and
-  // the raw completion cursor position instead of doing this.
-  std::size_t completion_pos = 0;
-  std::string code;
-  std::tie(completion_pos, code) = createExprToComplete(input, cursor_index,
-                                                    cursor_char_position);
+  // Remove the first token which is 'expr' or some alias/abbreviation of that.
+  const std::size_t old_code_size = code.size();
+  code = llvm::getToken(code).second.ltrim();
+
+  // Skip all arguments.
+  llvm::StringRef arg_separator = " -- ";
+  std::size_t separator_pos = code.find(arg_separator);
+  if (separator_pos != llvm::StringRef::npos) {
+    code = code.substr(separator_pos + arg_separator.size());
+  }
+
+  // Make the cursor_pos relative to the start of the code string.
+  cursor_pos -= (old_code_size - code.size());
+  code = code.substr(0, cursor_pos);
 
   auto language = exe_ctx.GetFrameRef().GetLanguage();
 
@@ -422,8 +365,8 @@ int CommandObjectExpression::HandleCompletion(Args &input, int &cursor_index,
   if (error.Fail())
     return 0;
 
-  expr->Complete(exe_ctx, matches, completion_pos);
-  return matches.GetSize();
+  expr->Complete(exe_ctx, request.GetMatches(), cursor_pos);
+  return request.GetMatches().GetSize();
 }
 
 static lldb_private::Status

@@ -107,12 +107,10 @@ class CommandLineExprCompletionTestCase(TestBase):
                               'expr const char *cstr = "some_e"; char c = *cstr')
         self.complete_from_to('expr const char *cstr = "some_e" ; char c = *cst',
                               'expr const char *cstr = "some_e" ; char c = *cstr')
-        # Requesting completion inside a string isn't really well defined, but the
-        # current behavior is that we just complete the current token if it looks
-        # it matches something from the surrounding code (which is better than
-        # not completing anything at all).
+        # Requesting completions inside an incomplete string doesn't provide any
+        # completions.
         self.complete_from_to('expr const char *cstr = "some_e',
-                              'expr const char *cstr = "some_expr')
+                              'expr const char *cstr = "some_e')
 
         # Test with expr arguments
         self.complete_from_to('expr -i0 -- some_expr .FooNoArgs',
