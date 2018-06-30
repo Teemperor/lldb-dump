@@ -224,7 +224,7 @@ CommandObjectExpression::CommandObjectExpression(
                                      "thread.  Displays any returned value "
                                      "with LLDB's default formatting.",
           "", eCommandProcessMustBePaused | eCommandTryTargetAPILock),
-      IOHandlerDelegate(IOHandlerDelegate::Completion::Expression),
+      IOHandlerDelegate(IOHandlerDelegate::Completion::LLDBCommand),
       m_option_group(), m_format_options(eFormatDefault),
       m_repl_option(LLDB_OPT_SET_1, false, "repl", 'r', "Drop into REPL", false,
                     true),
@@ -367,6 +367,23 @@ int CommandObjectExpression::HandleCompletion(CompletionRequest &request) {
 
   expr->Complete(exe_ctx, request.GetMatches(), cursor_pos);
   return request.GetMatches().GetSize();
+}
+
+int CommandObjectExpression::IOHandlerComplete(IOHandler &io_handler,
+                                               const char *current_line,
+                                               const char *cursor,
+                                               const char *last_char,
+                                               int skip_first_n_matches,
+                                               int max_matches,
+                                               StringList &matches) {
+  const std::string prefix = "expr ";
+  std::string new_line = prefix + current_line;
+  const char *new_cursor = (cursor - current_line) + new_line.data() + prefix.size();
+  const char *new_last_char = (last_char - current_line) + new_line.data() + prefix.size();
+
+  return io_handler.GetDebugger().GetCommandInterpreter().HandleCompletion(
+        new_line.c_str(), new_cursor, new_last_char, skip_first_n_matches, max_matches,
+        matches);
 }
 
 static lldb_private::Status

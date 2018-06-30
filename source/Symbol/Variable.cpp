@@ -644,7 +644,7 @@ static void PrivateAutoComplete(
       break;
 
     case '-':
-      if (partial_path[1] == '>' && !prefix_path.str().empty()) {
+      if (partial_path.size() > 1 && partial_path[1] == '>' && !prefix_path.str().empty()) {
         switch (type_class) {
         case lldb::eTypeClassPointer: {
           CompilerType pointee_type(compiler_type.GetPointeeType());
@@ -672,7 +672,7 @@ static void PrivateAutoComplete(
         case lldb::eTypeClassUnion:
         case lldb::eTypeClassStruct:
         case lldb::eTypeClassClass:
-          if (partial_path[1]) {
+          if (partial_path.size() > 1 && partial_path[1]) {
             // If there is more after the ".", then search deeper
             PrivateAutoComplete(frame, partial_path.substr(1),
                                 prefix_path + ".", compiler_type, matches,
