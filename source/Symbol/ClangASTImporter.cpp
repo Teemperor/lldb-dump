@@ -1048,6 +1048,7 @@ clang::Decl *ClangASTImporter::Minion::Imported(clang::Decl *from,
 
   if (TagDecl *from_tag_decl = dyn_cast<TagDecl>(from)) {
     TagDecl *to_tag_decl = dyn_cast<TagDecl>(to);
+    to_tag_decl = (TagDecl*)to_tag_decl->getPrimaryContext();
 
     to_tag_decl->setHasExternalLexicalStorage();
     to_tag_decl->setMustBuildLookupTable();

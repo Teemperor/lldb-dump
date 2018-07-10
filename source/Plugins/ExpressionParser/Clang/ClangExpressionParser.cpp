@@ -34,6 +34,7 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/SemaConsumer.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -214,6 +215,121 @@ private:
   std::shared_ptr<clang::TextDiagnosticBuffer> m_passthrough;
 };
 
+
+/// \brief wraps an ExternalASTSource in an ExternalSemaSource. No functional
+/// difference between the original source and this wrapper intended.
+class ExternalASTSourceWrapper : public ExternalSemaSource {
+  ExternalASTSource* m_Source;
+
+public:
+  ExternalASTSourceWrapper(ExternalASTSource* Source) : m_Source(Source) {
+    assert(m_Source && "Can't wrap nullptr ExternalASTSource");
+  }
+
+  virtual Decl* GetExternalDecl(uint32_t ID) override {
+    return m_Source->GetExternalDecl(ID);
+  }
+
+  virtual Selector GetExternalSelector(uint32_t ID) override {
+    return m_Source->GetExternalSelector(ID);
+  }
+
+  virtual uint32_t GetNumExternalSelectors() override {
+    return m_Source->GetNumExternalSelectors();
+  }
+
+  virtual Stmt* GetExternalDeclStmt(uint64_t Offset) override {
+    return m_Source->GetExternalDeclStmt(Offset);
+  }
+
+  virtual CXXCtorInitializer**
+  GetExternalCXXCtorInitializers(uint64_t Offset) override {
+    return m_Source->GetExternalCXXCtorInitializers(Offset);
+  }
+
+  virtual CXXBaseSpecifier*
+  GetExternalCXXBaseSpecifiers(uint64_t Offset) override {
+    return m_Source->GetExternalCXXBaseSpecifiers(Offset);
+  }
+
+  virtual void updateOutOfDateIdentifier(IdentifierInfo& II) override {
+    m_Source->updateOutOfDateIdentifier(II);
+  }
+
+  virtual bool FindExternalVisibleDeclsByName(const DeclContext* DC,
+                                              DeclarationName Name) override {
+    return m_Source->FindExternalVisibleDeclsByName(DC, Name);
+  }
+
+  virtual void completeVisibleDeclsMap(const DeclContext* DC) override {
+    m_Source->completeVisibleDeclsMap(DC);
+  }
+
+  virtual clang::Module* getModule(unsigned ID) override {
+    return m_Source->getModule(ID);
+  }
+
+  virtual llvm::Optional<ASTSourceDescriptor>
+  getSourceDescriptor(unsigned ID) override {
+    return m_Source->getSourceDescriptor(ID);
+  }
+
+  virtual ExtKind hasExternalDefinitions(const Decl* D) override {
+    return m_Source->hasExternalDefinitions(D);
+  }
+
+  virtual void
+  FindExternalLexicalDecls(const DeclContext* DC,
+                           llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+                           SmallVectorImpl<Decl*>& Result) override {
+    m_Source->FindExternalLexicalDecls(DC, IsKindWeWant, Result);
+  }
+
+  virtual void FindFileRegionDecls(FileID File, unsigned Offset,
+                                   unsigned Length,
+                                   SmallVectorImpl<Decl*>& Decls) override {
+    m_Source->FindFileRegionDecls(File, Offset, Length, Decls);
+  }
+
+  virtual void CompleteRedeclChain(const Decl* D) override {
+    m_Source->CompleteRedeclChain(D);
+  }
+
+  virtual void CompleteType(TagDecl* Tag) override {
+    m_Source->CompleteType(Tag);
+  }
+
+  virtual void CompleteType(ObjCInterfaceDecl* Class) override {
+    m_Source->CompleteType(Class);
+  }
+
+  virtual void ReadComments() override { m_Source->ReadComments(); }
+
+  virtual void StartedDeserializing() override {
+    m_Source->StartedDeserializing();
+  }
+
+  virtual void FinishedDeserializing() override {
+    m_Source->FinishedDeserializing();
+  }
+
+  virtual void StartTranslationUnit(ASTConsumer* Consumer) override {
+    m_Source->StartTranslationUnit(Consumer);
+  }
+
+  virtual void PrintStats() override { m_Source->PrintStats(); }
+
+  virtual bool layoutRecordType(
+      const RecordDecl* Record, uint64_t& Size, uint64_t& Alignment,
+      llvm::DenseMap<const FieldDecl*, uint64_t>& FieldOffsets,
+      llvm::DenseMap<const CXXRecordDecl*, CharUnits>& BaseOffsets,
+      llvm::DenseMap<const CXXRecordDecl*, CharUnits>& VirtualBaseOffsets)
+      override {
+    return m_Source->layoutRecordType(Record, Size, Alignment, FieldOffsets,
+                                      BaseOffsets, VirtualBaseOffsets);
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // Implementation of ClangExpressionParser
 //===----------------------------------------------------------------------===//
@@ -365,7 +481,7 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   lldb::LanguageType language = expr.Language();
 
   m_compiler->getLangOpts().Modules = true;
-  m_compiler->getLangOpts().ModulesTS = true;
+  // makes asserts very unhappy: m_compiler->getLangOpts().ModulesTS = true;
   switch (language) {
   case lldb::eLanguageTypeC:
   case lldb::eLanguageTypeC89:
@@ -376,14 +492,14 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
     // For now, the expression parser must use C++ anytime the language is a C
     // family language, because the expression parser uses features of C++ to
     // capture values.
-    m_compiler->getLangOpts().CPlusPlus = true;
+    //m_compiler->getLangOpts().CPlusPlus = true;
     break;
   case lldb::eLanguageTypeObjC:
-    m_compiler->getLangOpts().ObjC1 = true;
-    m_compiler->getLangOpts().ObjC2 = true;
+    //m_compiler->getLangOpts().ObjC1 = true;
+    //m_compiler->getLangOpts().ObjC2 = true;
     // FIXME: the following language option is a temporary workaround,
     // to "ask for ObjC, get ObjC++" (see comment above).
-    m_compiler->getLangOpts().CPlusPlus = true;
+    //m_compiler->getLangOpts().CPlusPlus = true;
 
     // Clang now sets as default C++14 as the default standard (with
     // GNU extensions), so we do the same here to avoid mismatches that
@@ -391,20 +507,20 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
     // as it's a C++11 feature). Currently lldb evaluates C++14 as C++11 (see
     // two lines below) so we decide to be consistent with that, but this could
     // be re-evaluated in the future.
-    m_compiler->getLangOpts().CPlusPlus11 = true;
+    //m_compiler->getLangOpts().CPlusPlus11 = true;
     break;
   case lldb::eLanguageTypeC_plus_plus:
   case lldb::eLanguageTypeC_plus_plus_11:
   case lldb::eLanguageTypeC_plus_plus_14:
-    m_compiler->getLangOpts().CPlusPlus11 = true;
+    //m_compiler->getLangOpts().CPlusPlus11 = true;
     m_compiler->getHeaderSearchOpts().UseLibcxx = true;
     LLVM_FALLTHROUGH;
   case lldb::eLanguageTypeC_plus_plus_03:
-    m_compiler->getLangOpts().CPlusPlus = true;
+    //m_compiler->getLangOpts().CPlusPlus = true;
     // FIXME: the following language option is a temporary workaround,
     // to "ask for C++, get ObjC++".  Apple hopes to remove this requirement on
     // non-Apple platforms, but for now it is needed.
-    m_compiler->getLangOpts().ObjC1 = true;
+    //m_compiler->getLangOpts().ObjC1 = true;
     break;
   case lldb::eLanguageTypeObjC_plus_plus:
   case lldb::eLanguageTypeUnknown:
@@ -415,11 +531,26 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   m_compiler->getLangOpts().ObjC1 = true;
   m_compiler->getLangOpts().ObjC2 = true;
   m_compiler->getLangOpts().CPlusPlus = true;
+  m_compiler->getLangOpts().GNUMode = true;
+  m_compiler->getLangOpts().GNUKeywords = true;
+  m_compiler->getLangOpts().NoBuiltin = false;
+  m_compiler->getLangOpts().DoubleSquareBracketAttributes = true;
   m_compiler->getLangOpts().CPlusPlus11 = true;
+  m_compiler->getHeaderSearchOpts().ModuleCachePath = "/tmp/org.llvm.lldb.cache/";
   m_compiler->getHeaderSearchOpts().UseLibcxx = true;
-  m_compiler->getHeaderSearchOpts().AddPath("/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/",
+  m_compiler->getHeaderSearchOpts().ImplicitModuleMaps = true;
+
+  m_compiler->getHeaderSearchOpts().ResourceDir = "/Users/teemperor/llvm/sidestuff/build/lib/clang/7.0.0";
+
+  m_compiler->getHeaderSearchOpts().AddPath("/Users/teemperor/llvm/sidestuff/build/include/c++/v1/",
                                             clang::frontend::IncludeDirGroup::System, false, true);
+
+  m_compiler->getHeaderSearchOpts().AddPath("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/usr/include/",
+                                            clang::frontend::IncludeDirGroup::ExternCSystem, false, true);
+
+
   m_compiler->getLangOpts().ImplicitModules = true;
+  //m_compiler->getLangOpts().ModulesLocalVisibility = true;
 
   m_compiler->getLangOpts().Bool = true;
   m_compiler->getLangOpts().WChar = true;
@@ -514,12 +645,11 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   // 8. Most of this we get from the CompilerInstance, but we also want to give
   // the context an ExternalASTSource.
   m_selector_table.reset(new SelectorTable());
-  m_builtin_context.reset(new Builtin::Context());
 
   std::unique_ptr<clang::ASTContext> ast_context(
       new ASTContext(m_compiler->getLangOpts(), m_compiler->getSourceManager(),
                      m_compiler->getPreprocessor().getIdentifierTable(),
-                     *m_selector_table.get(), *m_builtin_context.get()));
+                     *m_selector_table.get(), m_compiler->getPreprocessor().getBuiltinInfo()));
 
   ast_context->InitBuiltinTypes(m_compiler->getTarget());
 
@@ -527,17 +657,24 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
       dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
   ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap();
 
+  m_compiler->setASTContext(ast_context.get());
+  m_compiler->createModuleManager();
+  ExternalASTSourceWrapper *wrapper = new ExternalASTSourceWrapper(ast_context->getExternalSource());
+
   if (decl_map) {
-    llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source(
-        decl_map->CreateProxy());
+    clang::ExternalASTSource* ast_source(decl_map->CreateProxy());
+
+    ExternalASTSourceWrapper *wrapper2 = new ExternalASTSourceWrapper(ast_source);
+
     decl_map->InstallASTContext(*ast_context, m_compiler->getFileManager());
-    ast_context->setExternalSource(ast_source);
+    MultiplexExternalSemaSource *multiplexer = new MultiplexExternalSemaSource(*wrapper, *wrapper2);
+    ast_context->setExternalSource(multiplexer);
   }
 
   m_ast_context.reset(
       new ClangASTContext(m_compiler->getTargetOpts().Triple.c_str()));
   m_ast_context->setASTContext(ast_context.get());
-  m_compiler->setASTContext(ast_context.release());
+  ast_context.release();
 
   std::string module_name("$__lldb_module");
 

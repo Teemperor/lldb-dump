@@ -499,7 +499,7 @@ bool ClangUserExpression::Parse(DiagnosticManager &diagnostic_manager,
   // Check here for FixItHints.  If there are any try to apply the fixits and
   // set the fixed text in m_fixed_text before returning an error.
   if (num_errors) {
-    if (diagnostic_manager.HasFixIts()) {
+    if (diagnostic_manager.HasFixIts() && false) {
       if (parser.RewriteExpression(diagnostic_manager)) {
         size_t fixed_start;
         size_t fixed_end;
