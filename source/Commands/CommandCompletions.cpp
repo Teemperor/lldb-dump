@@ -90,7 +90,7 @@ int CommandCompletions::SourceFiles(CommandInterpreter &interpreter,
   } else {
     completer.DoCompletion(searcher);
   }
-  return request.GetMatches().GetSize();
+  return request.GetNumberOfMatches();
 }
 
 static int DiskFilesOrDirectories(const llvm::Twine &partial_name,
@@ -229,8 +229,14 @@ int CommandCompletions::DiskFiles(CommandInterpreter &interpreter,
                                   SearchFilter *searcher) {
   request.SetWordComplete(false);
   StandardTildeExpressionResolver Resolver;
-  return DiskFiles(request.GetCursorArgumentPrefix(), request.GetMatches(),
-                   Resolver);
+  StringList matches;
+  int result = DiskFiles(request.GetCursorArgumentPrefix(), matches, Resolver);
+  request.AddCompletions(matches);
+
+  // Propagate special return values.
+  if (result <= 0)
+    return result;
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::DiskFiles(const llvm::Twine &partial_file_name,
@@ -244,8 +250,15 @@ int CommandCompletions::DiskDirectories(CommandInterpreter &interpreter,
                                         SearchFilter *searcher) {
   request.SetWordComplete(false);
   StandardTildeExpressionResolver Resolver;
-  return DiskDirectories(request.GetCursorArgumentPrefix(),
-                         request.GetMatches(), Resolver);
+  StringList matches;
+  int result =
+      DiskDirectories(request.GetCursorArgumentPrefix(), matches, Resolver);
+  request.AddCompletions(matches);
+
+  // Propagate special return values.
+  if (result <= 0)
+    return result;
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::DiskDirectories(const llvm::Twine &partial_file_name,
@@ -267,7 +280,7 @@ int CommandCompletions::Modules(CommandInterpreter &interpreter,
   } else {
     completer.DoCompletion(searcher);
   }
-  return request.GetMatches().GetSize();
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::Symbols(CommandInterpreter &interpreter,
@@ -283,7 +296,7 @@ int CommandCompletions::Symbols(CommandInterpreter &interpreter,
   } else {
     completer.DoCompletion(searcher);
   }
-  return request.GetMatches().GetSize();
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::SettingsNames(CommandInterpreter &interpreter,
@@ -304,20 +317,23 @@ int CommandCompletions::SettingsNames(CommandInterpreter &interpreter,
   }
 
   size_t exact_matches_idx = SIZE_MAX;
-  const size_t num_matches =
-      g_property_names.AutoComplete(request.GetCursorArgumentPrefix(),
-                                    request.GetMatches(), exact_matches_idx);
+  StringList matches;
+  g_property_names.AutoComplete(request.GetCursorArgumentPrefix(), matches,
+                                exact_matches_idx);
   request.SetWordComplete(exact_matches_idx != SIZE_MAX);
-  return num_matches;
+  request.AddCompletions(matches);
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::PlatformPluginNames(CommandInterpreter &interpreter,
                                             CompletionRequest &request,
                                             SearchFilter *searcher) {
-  const uint32_t num_matches = PluginManager::AutoCompletePlatformName(
-      request.GetCursorArgumentPrefix(), request.GetMatches());
+  StringList new_matches;
+  std::size_t num_matches = PluginManager::AutoCompletePlatformName(
+      request.GetCursorArgumentPrefix(), new_matches);
   request.SetWordComplete(num_matches == 1);
-  return num_matches;
+  request.AddCompletions(new_matches);
+  return request.GetNumberOfMatches();
 }
 
 int CommandCompletions::ArchitectureNames(CommandInterpreter &interpreter,
@@ -409,10 +425,10 @@ CommandCompletions::SourceFileCompleter::DoCompletion(SearchFilter *filter) {
   filter->Search(*this);
   // Now convert the filelist to completions:
   for (size_t i = 0; i < m_matching_files.GetSize(); i++) {
-    m_request.GetMatches().AppendString(
+    m_request.AddCompletion(
         m_matching_files.GetFileSpecAtIndex(i).GetFilename().GetCString());
   }
-  return m_request.GetMatches().GetSize();
+  return m_request.GetNumberOfMatches();
 }
 
 //----------------------------------------------------------------------
@@ -478,9 +494,9 @@ size_t CommandCompletions::SymbolCompleter::DoCompletion(SearchFilter *filter) {
   filter->Search(*this);
   collection::iterator pos = m_match_set.begin(), end = m_match_set.end();
   for (pos = m_match_set.begin(); pos != end; pos++)
-    m_request.GetMatches().AppendString((*pos).GetCString());
+    m_request.AddCompletion((*pos).GetCString());
 
-  return m_request.GetMatches().GetSize();
+  return m_request.GetNumberOfMatches();
 }
 
 //----------------------------------------------------------------------
@@ -517,7 +533,7 @@ Searcher::CallbackReturn CommandCompletions::ModuleCompleter::SearchCallback(
       match = false;
 
     if (match) {
-      m_request.GetMatches().AppendString(cur_file_name);
+      m_request.AddCompletion(cur_file_name);
     }
   }
   return Searcher::eCallbackReturnContinue;
@@ -525,5 +541,5 @@ Searcher::CallbackReturn CommandCompletions::ModuleCompleter::SearchCallback(
 
 size_t CommandCompletions::ModuleCompleter::DoCompletion(SearchFilter *filter) {
   filter->Search(*this);
-  return m_request.GetMatches().GetSize();
+  return m_request.GetNumberOfMatches();
 }
