@@ -34,6 +34,7 @@
 #endif
 
 // Include python for non windows machines
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #endif // LLDB_DISABLE_PYTHON
 

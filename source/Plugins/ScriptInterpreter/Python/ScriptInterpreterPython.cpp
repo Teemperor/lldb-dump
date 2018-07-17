@@ -857,7 +857,8 @@ bool ScriptInterpreterPython::ExecuteOneLine(
           if (PyCallable_Check(m_run_one_line_function.get())) {
             PythonObject pargs(
                 PyRefType::Owned,
-                Py_BuildValue("(Os)", session_dict.get(), command_str.c_str()));
+                Py_BuildValue("(Os#)", session_dict.get(), command.data(),
+                              (Py_ssize_t)command.size()));
             if (pargs.IsValid()) {
               PythonObject return_value(
                   PyRefType::Owned,
