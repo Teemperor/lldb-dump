@@ -96,13 +96,14 @@ public:
   virtual bool Interrupt() { return false; }
 
   virtual bool ExecuteOneLine(
-      llvm::StringRef command, CommandReturnObject *result,
+      const std::string &command, CommandReturnObject *result,
       const ExecuteScriptOptions &options = ExecuteScriptOptions()) = 0;
 
   virtual void ExecuteInterpreterLoop() = 0;
 
   virtual bool ExecuteOneLineWithReturn(
-      llvm::StringRef in_string, ScriptReturnType return_type, void *ret_value,
+      const std::string &in_string, ScriptReturnType return_type,
+      void *ret_value,
       const ExecuteScriptOptions &options = ExecuteScriptOptions()) {
     return true;
   }

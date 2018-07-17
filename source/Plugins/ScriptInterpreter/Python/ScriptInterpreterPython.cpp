@@ -751,9 +751,8 @@ static void ReadThreadBytesReceived(void *baton, const void *src,
 }
 
 bool ScriptInterpreterPython::ExecuteOneLine(
-    llvm::StringRef command, CommandReturnObject *result,
+    const std::string &command, CommandReturnObject *result,
     const ExecuteScriptOptions &options) {
-  std::string command_str = command.str();
 
   if (!m_valid_session)
     return false;
@@ -857,7 +856,7 @@ bool ScriptInterpreterPython::ExecuteOneLine(
           if (PyCallable_Check(m_run_one_line_function.get())) {
             PythonObject pargs(
                 PyRefType::Owned,
-                Py_BuildValue("(Os)", session_dict.get(), command_str.c_str()));
+                Py_BuildValue("(Os)", session_dict.get(), command.c_str()));
             if (pargs.IsValid()) {
               PythonObject return_value(
                   PyRefType::Owned,
@@ -898,7 +897,7 @@ bool ScriptInterpreterPython::ExecuteOneLine(
     // The one-liner failed.  Append the error message.
     if (result) {
       result->AppendErrorWithFormat(
-          "python failed attempting to evaluate '%s'\n", command_str.c_str());
+          "python failed attempting to evaluate '%s'\n", command.c_str());
     }
     return false;
   }
@@ -1024,8 +1023,9 @@ bool ScriptInterpreterPython::Interrupt() {
   return false;
 }
 bool ScriptInterpreterPython::ExecuteOneLineWithReturn(
-    llvm::StringRef in_string, ScriptInterpreter::ScriptReturnType return_type,
-    void *ret_value, const ExecuteScriptOptions &options) {
+    const std::string &in_string,
+    ScriptInterpreter::ScriptReturnType return_type, void *ret_value,
+    const ExecuteScriptOptions &options) {
 
   Locker locker(this, ScriptInterpreterPython::Locker::AcquireLock |
                           ScriptInterpreterPython::Locker::InitSession |
@@ -1059,11 +1059,10 @@ bool ScriptInterpreterPython::ExecuteOneLineWithReturn(
   if (py_error.IsValid())
     PyErr_Clear();
 
-  std::string as_string = in_string.str();
   { // scope for PythonInputReaderManager
     // PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
     py_return.Reset(PyRefType::Owned,
-                    PyRun_String(as_string.c_str(), Py_eval_input,
+                    PyRun_String(in_string.c_str(), Py_eval_input,
                                  globals.get(), locals.get()));
     if (!py_return.IsValid()) {
       py_error.Reset(PyRefType::Borrowed, PyErr_Occurred());
@@ -1071,7 +1070,7 @@ bool ScriptInterpreterPython::ExecuteOneLineWithReturn(
         PyErr_Clear();
 
       py_return.Reset(PyRefType::Owned,
-                      PyRun_String(as_string.c_str(), Py_single_input,
+                      PyRun_String(in_string.c_str(), Py_single_input,
                                    globals.get(), locals.get()));
     }
   }
@@ -2892,7 +2891,7 @@ bool ScriptInterpreterPython::GetDocumentationForItem(const char *item,
                               // ExecuteOneLineWithReturn returns successfully
 
   if (ExecuteOneLineWithReturn(
-          command.c_str(), ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
+          command, ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
           &result_ptr,
           ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false))) {
     if (result_ptr)
