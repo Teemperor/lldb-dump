@@ -217,6 +217,8 @@ bool ClangModulesDeclVendorImpl::AddModule(ModulePath &path,
     }
   }
 
+  m_compiler_instance->getPreprocessor().getHeaderSearchInfo().loadTopLevelSystemModules();
+
   if (!m_compiler_instance->getPreprocessor()
            .getHeaderSearchInfo()
            .lookupModule(path[0].GetStringRef())) {
@@ -298,6 +300,10 @@ bool ClangModulesDeclVendor::LanguageSupportsClangModules(
   case lldb::LanguageType::eLanguageTypeC89:
   case lldb::LanguageType::eLanguageTypeC99:
   case lldb::LanguageType::eLanguageTypeObjC:
+  case lldb::LanguageType::eLanguageTypeC_plus_plus:
+  case lldb::LanguageType::eLanguageTypeC_plus_plus_03:
+  case lldb::LanguageType::eLanguageTypeC_plus_plus_11:
+  case lldb::LanguageType::eLanguageTypeC_plus_plus_14:
     return true;
   }
 }
@@ -308,13 +314,16 @@ bool ClangModulesDeclVendorImpl::AddModulesForCompileUnit(
   if (LanguageSupportsClangModules(cu.GetLanguage())) {
     std::vector<ConstString> imported_modules = cu.GetImportedModules();
 
+    ConstString stl("std");
     for (ConstString imported_module : imported_modules) {
       std::vector<ConstString> path;
 
+      if (imported_module.GetStringRef() == "set")
+        path.push_back(stl);
       path.push_back(imported_module);
 
       if (!AddModule(path, &exported_modules, error_stream)) {
-        return false;
+        //return false;
       }
     }
 
@@ -348,6 +357,14 @@ ClangModulesDeclVendorImpl::FindDecls(const ConstString &name, bool append,
       lookup_result,
       m_compiler_instance->getSema().getScopeForContext(
           m_compiler_instance->getASTContext().getTranslationUnitDecl()));
+
+
+  if (lookup_result.empty()) {
+      clang::Scope scope(m_compiler_instance->getSema().TUScope, clang::Scope::DeclScope, m_compiler_instance->getDiagnostics());
+      scope.setEntity(m_compiler_instance->getSema().getStdNamespace()->getPrimaryContext());
+      m_compiler_instance->getSema().LookupName(
+          lookup_result, &scope);
+  }
 
   uint32_t num_matches = 0;
 
@@ -561,6 +578,7 @@ ClangModulesDeclVendor::Create(Target &target) {
 
   std::vector<std::string> compiler_invocation_arguments = {
       "clang",
+      "-std=c++17",
       "-fmodules",
       "-fimplicit-module-maps",
       "-fcxx-modules",
