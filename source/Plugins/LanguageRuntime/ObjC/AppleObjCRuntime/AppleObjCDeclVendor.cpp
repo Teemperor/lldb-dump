@@ -550,7 +550,7 @@ bool AppleObjCDeclVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl) {
 uint32_t
 AppleObjCDeclVendor::FindDecls(const ConstString &name, bool append,
                                uint32_t max_matches,
-                               std::vector<clang::NamedDecl *> &decls) {
+                               std::vector<clang::NamedDecl *> &decls, clang::DeclContext *context) {
   static unsigned int invocation_id = 0;
   unsigned int current_id = invocation_id++;
 

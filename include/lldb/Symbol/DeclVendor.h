@@ -52,7 +52,7 @@ public:
   //------------------------------------------------------------------
   virtual uint32_t FindDecls(const ConstString &name, bool append,
                              uint32_t max_matches,
-                             std::vector<clang::NamedDecl *> &decls) = 0;
+                             std::vector<clang::NamedDecl *> &decls, clang::DeclContext *context = nullptr) = 0;
 
   //------------------------------------------------------------------
   /// Interface for ExternalASTMerger.  Returns an ImporterSource 

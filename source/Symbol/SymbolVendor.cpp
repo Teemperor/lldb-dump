@@ -184,7 +184,7 @@ bool SymbolVendor::ParseCompileUnitIsOptimized(const SymbolContext &sc) {
 }
 
 bool SymbolVendor::ParseImportedModules(
-    const SymbolContext &sc, std::vector<ConstString> &imported_modules) {
+    const SymbolContext &sc, std::vector<std::vector<ConstString>> &imported_modules) {
   ModuleSP module_sp(GetModule());
   if (module_sp) {
     std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());
