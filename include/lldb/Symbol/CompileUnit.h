@@ -267,7 +267,7 @@ public:
   /// @return
   ///     A list of imported module names.
   //------------------------------------------------------------------
-  const std::vector<ConstString> &GetImportedModules();
+  const std::vector<std::vector<ConstString> > &GetImportedModules();
 
   //------------------------------------------------------------------
   /// Get the SymbolFile plug-in user data.
@@ -418,7 +418,7 @@ protected:
   std::vector<lldb::FunctionSP> m_functions; ///< The sparsely populated list of
                                              ///shared pointers to functions
   ///< that gets populated as functions get partially parsed.
-  std::vector<ConstString> m_imported_modules; ///< All modules, including the
+  std::vector<std::vector<ConstString>> m_imported_modules; ///< All modules, including the
                                                ///current module, imported by
                                                ///this
                                                ///< compile unit.

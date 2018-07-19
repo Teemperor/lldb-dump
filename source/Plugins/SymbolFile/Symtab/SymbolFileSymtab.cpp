@@ -221,7 +221,7 @@ bool SymbolFileSymtab::ParseCompileUnitSupportFiles(
 }
 
 bool SymbolFileSymtab::ParseImportedModules(
-    const SymbolContext &sc, std::vector<ConstString> &imported_modules) {
+    const SymbolContext &sc, std::vector<std::vector<lldb_private::ConstString> > &imported_modules) {
   return false;
 }
 

@@ -912,7 +912,10 @@ void ClangASTSource::FindExternalVisibleDecls(
           uint32_t max_matches = 1;
           std::vector<clang::NamedDecl *> decls;
 
-          if (!modules_decl_vendor->FindDecls(name, append, max_matches, decls))
+          DeclContext *decl_ctx = nullptr;
+          if (namespace_decl.IsClang())
+            decl_ctx = (DeclContext *)namespace_decl.GetOpaqueDeclContext();
+          if (!modules_decl_vendor->FindDecls(name, append, max_matches, decls, decl_ctx))
             break;
 
           if (log) {

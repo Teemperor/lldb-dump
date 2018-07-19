@@ -948,9 +948,23 @@ bool SymbolFileDWARF::ParseCompileUnitIsOptimized(
   return false;
 }
 
+static void BuildModulePath(DWARFDIE die, std::vector<lldb_private::ConstString>& path) {
+  if (die.Tag() == DW_TAG_module) {
+    if (const char *name = die.GetAttributeValueAsString(
+            DW_AT_name, nullptr)) {
+      DWARFDIE parent = die.GetParent();
+      if (parent.IsValid()) {
+        BuildModulePath(parent, path);
+      }
+      ConstString const_name(name);
+      path.push_back(const_name);
+    }
+  }
+}
+
 bool SymbolFileDWARF::ParseImportedModules(
     const lldb_private::SymbolContext &sc,
-    std::vector<lldb_private::ConstString> &imported_modules) {
+    std::vector<std::vector<lldb_private::ConstString>> &imported_modules) {
   assert(sc.comp_unit);
   DWARFUnit *dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
   if (dwarf_cu) {
@@ -967,20 +981,16 @@ bool SymbolFileDWARF::ParseImportedModules(
             if (child_die.Tag() == DW_TAG_imported_declaration) {
               if (DWARFDIE module_die =
                       child_die.GetReferencedDIE(DW_AT_import)) {
-                if (module_die.Tag() == DW_TAG_module) {
-                  if (const char *name = module_die.GetAttributeValueAsString(
-                          DW_AT_name, nullptr)) {
-                    ConstString const_name(name);
-                    imported_modules.push_back(const_name);
-                  }
-                }
+                std::vector<lldb_private::ConstString> path;
+                BuildModulePath(module_die, path);
+                imported_modules.push_back(path);
               }
             }
           }
         }
       } else {
         for (const auto &pair : m_external_type_modules) {
-          imported_modules.push_back(pair.first);
+          imported_modules.push_back({pair.first});
         }
       }
     }

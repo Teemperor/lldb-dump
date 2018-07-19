@@ -123,7 +123,7 @@ public:
   }
   virtual bool
   ParseImportedModules(const SymbolContext &sc,
-                       std::vector<ConstString> &imported_modules) = 0;
+                       std::vector<std::vector<lldb_private::ConstString> > &imported_modules) = 0;
   virtual size_t ParseFunctionBlocks(const SymbolContext &sc) = 0;
   virtual size_t ParseTypes(const SymbolContext &sc) = 0;
   virtual size_t ParseVariablesForContext(const SymbolContext &sc) = 0;

@@ -60,7 +60,7 @@ public:
   virtual bool ParseCompileUnitIsOptimized(const SymbolContext &sc);
 
   virtual bool ParseImportedModules(const SymbolContext &sc,
-                                    std::vector<ConstString> &imported_modules);
+                                    std::vector<std::vector<ConstString> > &imported_modules);
 
   virtual size_t ParseFunctionBlocks(const SymbolContext &sc);
 

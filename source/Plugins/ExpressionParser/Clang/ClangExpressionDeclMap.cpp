@@ -1256,7 +1256,20 @@ void ClangExpressionDeclMap::FindExternalVisibleDecls(
     if (target) {
       if (ClangModulesDeclVendor *decl_vendor =
               target->GetClangModulesDeclVendor()) {
-        decl_vendor->FindDecls(name, false, UINT32_MAX, decls_from_modules);
+        clang::DeclContext *ctxt = nullptr;
+        if (namespace_decl && namespace_decl.IsClang())
+          ctxt = (clang::DeclContext *)namespace_decl.GetOpaqueDeclContext();
+        decl_vendor->FindDecls(name, false, UINT32_MAX, decls_from_modules, ctxt);
+        bool added_decls = false;
+        for (auto d : decls_from_modules) {
+          clang::Decl *new_decl = CopyDecl(d);
+          if (auto nd = dyn_cast<clang::NamedDecl>(new_decl)) {
+            context.AddNamedDecl(nd);
+            added_decls = true;
+          }
+        }
+        if (added_decls)
+          return;
       }
     }
 

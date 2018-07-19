@@ -81,7 +81,7 @@ public:
                                 Stream &error_stream) override;
 
   uint32_t FindDecls(const ConstString &name, bool append, uint32_t max_matches,
-                     std::vector<clang::NamedDecl *> &decls) override;
+                     std::vector<clang::NamedDecl *> &decls, clang::DeclContext *context = nullptr) override;
 
   void ForEachMacro(const ModuleVector &modules,
                     std::function<bool(const std::string &)> handler) override;
@@ -312,15 +312,9 @@ bool ClangModulesDeclVendorImpl::AddModulesForCompileUnit(
     CompileUnit &cu, ClangModulesDeclVendor::ModuleVector &exported_modules,
     Stream &error_stream) {
   if (LanguageSupportsClangModules(cu.GetLanguage())) {
-    std::vector<ConstString> imported_modules = cu.GetImportedModules();
+    std::vector<std::vector<ConstString>> imported_modules = cu.GetImportedModules();
 
-    ConstString stl("std");
-    for (ConstString imported_module : imported_modules) {
-      std::vector<ConstString> path;
-
-      if (imported_module.GetStringRef() == "set")
-        path.push_back(stl);
-      path.push_back(imported_module);
+    for (std::vector<ConstString> path : imported_modules) {
 
       if (!AddModule(path, &exported_modules, error_stream)) {
         //return false;
@@ -335,10 +329,74 @@ bool ClangModulesDeclVendorImpl::AddModulesForCompileUnit(
 
 // ClangImporter::lookupValue
 
+static void makeScopes(clang::Sema &sema,
+                          clang::DeclContext *ctxt, std::vector<clang::Scope *> &result) {
+  if (auto parent = ctxt->getParent()) {
+    makeScopes(sema, parent, result);
+
+    clang::Scope *scope = new clang::Scope(result.back(), clang::Scope::DeclScope, sema.getDiagnostics());
+    scope->setEntity(ctxt);
+    result.push_back(scope);
+  } else
+    result.push_back(sema.TUScope);
+}
+
+// TODO: Can we keep the result on the stack?
+static std::unique_ptr<clang::LookupResult> do_lookup(clang::Sema &sema,
+                                                      llvm::StringRef name,
+                                                      clang::DeclContext *ctxt) {
+  clang::IdentifierInfo &ident =
+      sema.getASTContext().Idents.get(name);
+
+  std::unique_ptr<clang::LookupResult> lookup_result;
+  lookup_result.reset(new clang::LookupResult(
+      sema, clang::DeclarationName(&ident),
+      clang::SourceLocation(), clang::Sema::LookupOrdinaryName));
+
+  std::vector<clang::Scope *> scopes;
+  makeScopes(sema, ctxt, scopes);
+  sema.LookupName(*lookup_result, scopes.back());
+  // TODO: free memory of scopes
+
+  return lookup_result;
+}
+
+static clang::DeclContext *getEqualLocalContext(clang::Sema &sema,
+                                                clang::DiagnosticsEngine &diags,
+                                                clang::DeclContext *foreign_ctxt) {
+
+  while (foreign_ctxt && foreign_ctxt->isInlineNamespace())
+    foreign_ctxt = foreign_ctxt->getParent();
+
+  if (!foreign_ctxt)
+    return sema.getASTContext().getTranslationUnitDecl();
+
+  clang::DeclContext *parent = getEqualLocalContext(sema, diags, foreign_ctxt->getParent());
+
+  if (foreign_ctxt->isNamespace()) {
+    clang::NamespaceDecl *ns = llvm::dyn_cast<clang::NamespaceDecl>(foreign_ctxt);
+    llvm::StringRef ns_name = ns->getName();
+
+    auto lookup_result = do_lookup(sema, ns_name, parent);
+    for (clang::NamedDecl *named_decl : *lookup_result) {
+      if (named_decl->getName() != ns_name)
+        continue;
+      if (named_decl->getKind() != ns->getKind())
+        continue;
+
+      if (clang::DeclContext *DC = llvm::dyn_cast<clang::DeclContext>(named_decl))
+        return DC->getPrimaryContext();
+    }
+    llvm::errs() << "CANT " << ns->getNameAsString() << "\n";
+  }
+  return sema.getASTContext().getTranslationUnitDecl();
+}
+
 uint32_t
 ClangModulesDeclVendorImpl::FindDecls(const ConstString &name, bool append,
                                       uint32_t max_matches,
-                                      std::vector<clang::NamedDecl *> &decls) {
+                                      std::vector<clang::NamedDecl *> &decls,
+                                      clang::DeclContext *context) {
   if (!m_enabled) {
     return 0;
   }
@@ -346,29 +404,15 @@ ClangModulesDeclVendorImpl::FindDecls(const ConstString &name, bool append,
   if (!append)
     decls.clear();
 
-  clang::IdentifierInfo &ident =
-      m_compiler_instance->getASTContext().Idents.get(name.GetStringRef());
+  clang::DeclContext *ctxt = getEqualLocalContext(m_compiler_instance->getSema(),
+                                        m_compiler_instance->getDiagnostics(),
+                                        context);
 
-  clang::LookupResult lookup_result(
-      m_compiler_instance->getSema(), clang::DeclarationName(&ident),
-      clang::SourceLocation(), clang::Sema::LookupOrdinaryName);
-
-  m_compiler_instance->getSema().LookupName(
-      lookup_result,
-      m_compiler_instance->getSema().getScopeForContext(
-          m_compiler_instance->getASTContext().getTranslationUnitDecl()));
-
-
-  if (lookup_result.empty()) {
-      clang::Scope scope(m_compiler_instance->getSema().TUScope, clang::Scope::DeclScope, m_compiler_instance->getDiagnostics());
-      scope.setEntity(m_compiler_instance->getSema().getStdNamespace()->getPrimaryContext());
-      m_compiler_instance->getSema().LookupName(
-          lookup_result, &scope);
-  }
+  auto lookup_result = do_lookup(m_compiler_instance->getSema(), name.GetStringRef(), ctxt);
 
   uint32_t num_matches = 0;
 
-  for (clang::NamedDecl *named_decl : lookup_result) {
+  for (clang::NamedDecl *named_decl : *lookup_result) {
     if (num_matches >= max_matches)
       return num_matches;
 
