@@ -41,7 +41,7 @@ public:
   StreamTee(const StreamTee &rhs)
       : Stream(rhs), m_streams_mutex(), m_streams() {
     // Don't copy until we lock down "rhs"
-    std::lock_guard<std::recursive_mutex> guard(rhs.m_streams_mutex);
+    std::lock_guard<std::mutex> guard(rhs.m_streams_mutex);
     m_streams = rhs.m_streams;
   }
 
@@ -50,15 +50,15 @@ public:
   StreamTee &operator=(const StreamTee &rhs) {
     if (this != &rhs) {
       Stream::operator=(rhs);
-      std::lock_guard<std::recursive_mutex> lhs_locker(m_streams_mutex);
-      std::lock_guard<std::recursive_mutex> rhs_locker(rhs.m_streams_mutex);
+      std::lock_guard<std::mutex> lhs_locker(m_streams_mutex);
+      std::lock_guard<std::mutex> rhs_locker(rhs.m_streams_mutex);
       m_streams = rhs.m_streams;
     }
     return *this;
   }
 
   void Flush() override {
-    std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
     collection::iterator pos, end;
     for (pos = m_streams.begin(), end = m_streams.end(); pos != end; ++pos) {
       // Allow for our collection to contain NULL streams. This allows the
@@ -71,7 +71,7 @@ public:
   }
 
   size_t Write(const void *s, size_t length) override {
-    std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
     if (m_streams.empty())
       return 0;
 
@@ -94,31 +94,27 @@ public:
   }
 
   size_t AppendStream(const lldb::StreamSP &stream_sp) {
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
     size_t new_idx = m_streams.size();
-    std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
     m_streams.push_back(stream_sp);
     return new_idx;
   }
 
   size_t GetNumStreams() const {
-    size_t result = 0;
-    {
-      std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
-      result = m_streams.size();
-    }
-    return result;
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
+    return m_streams.size();
   }
 
   lldb::StreamSP GetStreamAtIndex(uint32_t idx) {
     lldb::StreamSP stream_sp;
-    std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
     if (idx < m_streams.size())
       stream_sp = m_streams[idx];
     return stream_sp;
   }
 
   void SetStreamAtIndex(uint32_t idx, const lldb::StreamSP &stream_sp) {
-    std::lock_guard<std::recursive_mutex> guard(m_streams_mutex);
+    std::lock_guard<std::mutex> guard(m_streams_mutex);
     // Resize our stream vector as necessary to fit as many streams as needed.
     // This also allows this class to be used with hard coded indexes that can
     // be used contain many streams, not all of which are valid.
@@ -129,7 +125,7 @@ public:
 
 protected:
   typedef std::vector<lldb::StreamSP> collection;
-  mutable std::recursive_mutex m_streams_mutex;
+  mutable std::mutex m_streams_mutex;
   collection m_streams;
 };
 
