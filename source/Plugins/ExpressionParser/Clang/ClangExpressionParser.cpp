@@ -34,12 +34,14 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/MultiplexExternalSemaSource.h"
 #include "clang/Sema/SemaConsumer.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 
@@ -653,36 +655,9 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
 
   ast_context->InitBuiltinTypes(m_compiler->getTarget());
 
-  ClangExpressionHelper *type_system_helper =
-      dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
-  ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap();
-
   m_compiler->setASTContext(ast_context.get());
-  m_compiler->createModuleManager();
-  ExternalASTSourceWrapper *wrapper = new ExternalASTSourceWrapper(ast_context->getExternalSource());
 
-  if (decl_map) {
-    clang::ExternalASTSource* ast_source(decl_map->CreateProxy());
-
-    ExternalASTSourceWrapper *wrapper2 = new ExternalASTSourceWrapper(ast_source);
-
-    decl_map->InstallASTContext(*ast_context, m_compiler->getFileManager());
-    MultiplexExternalSemaSource *multiplexer = new MultiplexExternalSemaSource(*wrapper, *wrapper2);
-    ast_context->setExternalSource(multiplexer);
-  }
-
-  m_ast_context.reset(
-      new ClangASTContext(m_compiler->getTargetOpts().Triple.c_str()));
-  m_ast_context->setASTContext(ast_context.get());
   ast_context.release();
-
-  std::string module_name("$__lldb_module");
-
-  m_llvm_context.reset(new LLVMContext());
-  m_code_generator.reset(CreateLLVMCodeGen(
-      m_compiler->getDiagnostics(), module_name,
-      m_compiler->getHeaderSearchOpts(), m_compiler->getPreprocessorOpts(),
-      m_compiler->getCodeGenOpts(), *m_llvm_context));
 }
 
 ClangExpressionParser::~ClangExpressionParser() {}
@@ -695,6 +670,12 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
   diag_buf->FlushDiagnostics(m_compiler->getDiagnostics());
 
   adapter->ResetManager(&diagnostic_manager);
+
+  ClangExpressionHelper *type_system_helper =
+      dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
+  ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap();
+
+  clang::ASTContext *ast_context = &m_compiler->getASTContext();
 
   const char *expr_text = m_expr.Text();
 
@@ -737,23 +718,54 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
   diag_buf->BeginSourceFile(m_compiler->getLangOpts(),
                             &m_compiler->getPreprocessor());
 
-  ClangExpressionHelper *type_system_helper =
-      dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
-
-  ASTConsumer *ast_transformer =
-      type_system_helper->ASTTransformer(m_code_generator.get());
 
   if (ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap())
     decl_map->InstallCodeGenerator(m_code_generator.get());
 
-  if (ast_transformer) {
-    ast_transformer->Initialize(m_compiler->getASTContext());
-    ParseAST(m_compiler->getPreprocessor(), ast_transformer,
-             m_compiler->getASTContext());
-  } else {
-    m_code_generator->Initialize(m_compiler->getASTContext());
-    ParseAST(m_compiler->getPreprocessor(), m_code_generator.get(),
-             m_compiler->getASTContext());
+
+  std::string module_name("$__lldb_module");
+  m_llvm_context.reset(new LLVMContext());
+  m_code_generator.reset(CreateLLVMCodeGen(
+      m_compiler->getDiagnostics(), module_name,
+      m_compiler->getHeaderSearchOpts(), m_compiler->getPreprocessorOpts(),
+      m_compiler->getCodeGenOpts(), *m_llvm_context));
+
+  ASTConsumer *ast_transformer =
+      type_system_helper->ASTTransformer(m_code_generator.get());
+
+  ASTConsumer *Consumer = ast_transformer ? ast_transformer : m_code_generator.get();
+  Consumer->Initialize(*ast_context);
+
+  m_compiler->setSema(new Sema(m_compiler->getPreprocessor(), m_compiler->getASTContext(),
+                               *Consumer, TU_Complete, nullptr));
+
+  m_compiler->createModuleManager();
+
+
+  if (decl_map) {
+    ExternalASTSourceWrapper *wrapper = new ExternalASTSourceWrapper(ast_context->getExternalSource());
+
+    clang::ExternalASTSource* ast_source(decl_map->CreateProxy());
+
+    ExternalASTSourceWrapper *wrapper2 = new ExternalASTSourceWrapper(ast_source);
+
+    decl_map->InstallASTContext(*ast_context, m_compiler->getFileManager());
+    MultiplexExternalSemaSource *multiplexer = new MultiplexExternalSemaSource(*wrapper, *wrapper2);
+    ast_context->setExternalSource(multiplexer);
+  }
+
+  m_ast_context.reset(
+      new ClangASTContext(m_compiler->getTargetOpts().Triple.c_str()));
+  m_ast_context->setASTContext(ast_context);
+  m_ast_context.release();
+
+  assert(m_compiler->getASTContext().getExternalSource() && "Sema doesn't know about the ASTReader for modules?");
+  assert(m_compiler->getSema().getExternalSource() && "Sema doesn't know about the ASTReader for modules?");
+
+  {
+    llvm::CrashRecoveryContextCleanupRegistrar<Sema> CleanupSema(&m_compiler->getSema());
+    ParseAST(m_compiler->getSema(), false, false);
+    m_compiler->setSema(nullptr);
   }
 
   diag_buf->EndSourceFile();
