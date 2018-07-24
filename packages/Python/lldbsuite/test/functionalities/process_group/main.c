@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
             sleep(1);
 
         printf("Child's previous process group is: %d\n", getpgid(0));
-        setpgid(0, 0); // Set breakpoint here
+        setsid(); // Set breakpoint here
         printf("Child's process group set to: %d\n", getpgid(0));
     }
 
