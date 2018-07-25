@@ -4012,7 +4012,7 @@ bool RenderScriptRuntime::ResolveKernelName(lldb::addr_t kernel_addr,
 }
 
 void RSModuleDescriptor::Dump(Stream &strm) const {
-  int indent = strm.GetIndentLevel();
+  auto indent = strm.GetIndentLevel();
 
   strm.Indent();
   m_module->GetFileSpec().Dump(&strm);

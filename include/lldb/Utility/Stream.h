@@ -404,9 +404,9 @@ public:
   /// Get the current indentation level.
   ///
   /// @return
-  ///     The current indentation level as an integer.
+  ///     The current indentation level as an unsigned integer.
   //------------------------------------------------------------------
-  int GetIndentLevel() const;
+  unsigned GetIndentLevel() const;
 
   //------------------------------------------------------------------
   /// Indent the current line in the stream.
@@ -424,12 +424,12 @@ public:
   //------------------------------------------------------------------
   /// Decrement the current indentation level.
   //------------------------------------------------------------------
-  void IndentLess(int amount = 2);
+  void IndentLess(unsigned amount = 2);
 
   //------------------------------------------------------------------
   /// Increment the current indentation level.
   //------------------------------------------------------------------
-  void IndentMore(int amount = 2);
+  void IndentMore(unsigned amount = 2);
 
   //------------------------------------------------------------------
   /// Output an offset value.
@@ -494,7 +494,7 @@ public:
   /// @param[in] level
   ///     The new indentation level.
   //------------------------------------------------------------------
-  void SetIndentLevel(int level);
+  void SetIndentLevel(unsigned level);
 
   //------------------------------------------------------------------
   /// Output a SLEB128 number to the stream.
@@ -524,8 +524,6 @@ public:
   //------------------------------------------------------------------
   size_t PutULEB128(uint64_t uval);
 
-  static void UnitTest(Stream *s);
-
 protected:
   //------------------------------------------------------------------
   // Member variables
@@ -534,7 +532,7 @@ protected:
   uint32_t m_addr_size; ///< Size of an address in bytes.
   lldb::ByteOrder
       m_byte_order;   ///< Byte order to use when encoding scalar types.
-  int m_indent_level; ///< Indention level.
+  unsigned m_indent_level; ///< Indention level.
 
   size_t _PutHex8(uint8_t uvalue, bool add_prefix);
 };
