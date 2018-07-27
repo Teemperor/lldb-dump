@@ -273,8 +273,8 @@ class CommandLineCompletionTestCase(TestBase):
             if turn_off_re_match:
                 self.expect(
                     compare_string, msg=COMPLETION_MSG(
-                        str_input, p), exe=False, substrs=[p])
+                        str_input, p, match_strings), exe=False, substrs=[p])
             else:
                 self.expect(
                     compare_string, msg=COMPLETION_MSG(
-                        str_input, p), exe=False, patterns=[p])
+                        str_input, p, match_strings), exe=False, patterns=[p])
