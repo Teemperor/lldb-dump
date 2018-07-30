@@ -427,11 +427,11 @@ size_t Stream::PutMaxHex64(uint64_t uvalue, size_t byte_size,
   case 1:
     return PutHex8((uint8_t)uvalue);
   case 2:
-    return PutHex16((uint16_t)uvalue);
+    return PutHex16((uint16_t)uvalue, byte_order);
   case 4:
-    return PutHex32((uint32_t)uvalue);
+    return PutHex32((uint32_t)uvalue, byte_order);
   case 8:
-    return PutHex64(uvalue);
+    return PutHex64(uvalue, byte_order);
   }
   return 0;
 }
@@ -525,49 +525,4 @@ size_t Stream::PutCStringAsRawHex8(const char *s) {
   if (binary_is_set)
     m_flags.Set(eBinary);
   return bytes_written;
-}
-
-void Stream::UnitTest(Stream *s) {
-  s->PutHex8(0x12);
-
-  s->PutChar(' ');
-  s->PutHex16(0x3456, endian::InlHostByteOrder());
-  s->PutChar(' ');
-  s->PutHex16(0x3456, eByteOrderBig);
-  s->PutChar(' ');
-  s->PutHex16(0x3456, eByteOrderLittle);
-
-  s->PutChar(' ');
-  s->PutHex32(0x789abcde, endian::InlHostByteOrder());
-  s->PutChar(' ');
-  s->PutHex32(0x789abcde, eByteOrderBig);
-  s->PutChar(' ');
-  s->PutHex32(0x789abcde, eByteOrderLittle);
-
-  s->PutChar(' ');
-  s->PutHex64(0x1122334455667788ull, endian::InlHostByteOrder());
-  s->PutChar(' ');
-  s->PutHex64(0x1122334455667788ull, eByteOrderBig);
-  s->PutChar(' ');
-  s->PutHex64(0x1122334455667788ull, eByteOrderLittle);
-
-  const char *hola = "Hello World!!!";
-  s->PutChar(' ');
-  s->PutCString(hola);
-
-  s->PutChar(' ');
-  s->Write(hola, 5);
-
-  s->PutChar(' ');
-  s->PutCStringAsRawHex8(hola);
-
-  s->PutChar(' ');
-  s->PutCStringAsRawHex8("01234");
-
-  s->PutChar(' ');
-  s->Printf("pid=%i", 12733);
-
-  s->PutChar(' ');
-  s->PrintfAsRawHex8("pid=%i", 12733);
-  s->PutChar('\n');
 }
