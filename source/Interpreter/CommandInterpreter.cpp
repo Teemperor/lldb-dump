@@ -794,11 +794,14 @@ void CommandInterpreter::LoadCommandDictionary() {
 }
 
 int CommandInterpreter::GetCommandNamesMatchingPartialString(
-    const char *cmd_str, bool include_aliases, StringList &matches) {
-  AddNamesMatchingPartialString(m_command_dict, cmd_str, matches);
+    const char *cmd_str, bool include_aliases, StringList &matches,
+    StringList &descriptions) {
+  AddNamesMatchingPartialString(m_command_dict, cmd_str, matches,
+                                &descriptions);
 
   if (include_aliases) {
-    AddNamesMatchingPartialString(m_alias_dict, cmd_str, matches);
+    AddNamesMatchingPartialString(m_alias_dict, cmd_str, matches,
+                                  &descriptions);
   }
 
   return matches.GetSize();
@@ -1712,10 +1715,10 @@ int CommandInterpreter::HandleCompletionMatches(CompletionRequest &request) {
   if (request.GetCursorIndex() == -1) {
     // We got nothing on the command line, so return the list of commands
     bool include_aliases = true;
-    StringList new_matches;
-    num_command_matches =
-        GetCommandNamesMatchingPartialString("", include_aliases, new_matches);
-    request.AddCompletions(new_matches);
+    StringList new_matches, descriptions;
+    num_command_matches = GetCommandNamesMatchingPartialString(
+        "", include_aliases, new_matches, descriptions);
+    request.AddCompletions(new_matches, descriptions);
   } else if (request.GetCursorIndex() == 0) {
     // The cursor is in the first argument, so just do a lookup in the
     // dictionary.
@@ -1762,12 +1765,13 @@ int CommandInterpreter::HandleCompletionMatches(CompletionRequest &request) {
 
 int CommandInterpreter::HandleCompletion(
     const char *current_line, const char *cursor, const char *last_char,
-    int match_start_point, int max_return_elements, StringList &matches) {
+    int match_start_point, int max_return_elements, StringList &matches,
+    StringList &descriptions) {
 
   llvm::StringRef command_line(current_line, last_char - current_line);
+  CompletionResult result;
   CompletionRequest request(command_line, cursor - current_line,
-                            match_start_point, max_return_elements, matches);
-
+                            match_start_point, max_return_elements, result);
   // Don't complete comments, and if the line we are completing is just the
   // history repeat character, substitute the appropriate history line.
   const char *first_arg = request.GetParsedLine().GetArgumentAtIndex(0);
@@ -1777,6 +1781,7 @@ int CommandInterpreter::HandleCompletion(
     else if (first_arg[0] == CommandHistory::g_repeat_char) {
       if (auto hist_str = m_command_history.FindString(first_arg)) {
         matches.InsertStringAtIndex(0, *hist_str);
+        descriptions.InsertStringAtIndex(0, "Previous command history event");
         return -2;
       } else
         return 0;
@@ -1787,6 +1792,8 @@ int CommandInterpreter::HandleCompletion(
   lldbassert(max_return_elements == -1);
 
   int num_command_matches = HandleCompletionMatches(request);
+  result.GetMatches(matches);
+  result.GetDescriptions(descriptions);
 
   if (num_command_matches <= 0)
     return num_command_matches;
@@ -1794,6 +1801,7 @@ int CommandInterpreter::HandleCompletion(
   if (request.GetParsedLine().GetArgumentCount() == 0) {
     // If we got an empty string, insert nothing.
     matches.InsertStringAtIndex(0, "");
+    descriptions.InsertStringAtIndex(0, "");
   } else {
     // Now figure out if there is a common substring, and if so put that in
     // element 0, otherwise put an empty string in element 0.
@@ -1815,6 +1823,7 @@ int CommandInterpreter::HandleCompletion(
       common_prefix.push_back(' ');
     }
     matches.InsertStringAtIndex(0, common_prefix.c_str());
+    descriptions.InsertStringAtIndex(0, "");
   }
   return num_command_matches;
 }

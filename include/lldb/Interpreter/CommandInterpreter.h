@@ -310,7 +310,8 @@ public:
   // FIXME: Only max_return_elements == -1 is supported at present.
   int HandleCompletion(const char *current_line, const char *cursor,
                        const char *last_char, int match_start_point,
-                       int max_return_elements, StringList &matches);
+                       int max_return_elements, StringList &matches,
+                       StringList &descriptions);
 
   // This version just returns matches, and doesn't compute the substring.  It
   // is here so the Help command can call it for the first argument. It uses
@@ -319,7 +320,8 @@ public:
 
   int GetCommandNamesMatchingPartialString(const char *cmd_cstr,
                                            bool include_aliases,
-                                           StringList &matches);
+                                           StringList &matches,
+                                           StringList &descriptions);
 
   void GetHelp(CommandReturnObject &result,
                uint32_t types = eCommandTypesAllThem);
