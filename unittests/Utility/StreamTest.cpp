@@ -218,6 +218,52 @@ TEST_F(StreamTest, PutMaxHex64ByteOrderLittle) {
 }
 
 //------------------------------------------------------------------------------
+// Indentation tests.
+//------------------------------------------------------------------------------
+
+TEST_F(StreamTest, Indent) {
+  s.Indent("0\n");
+  s.IndentMore(2);
+  s.Indent("2\n");
+  s.SetIndentLevel(4);
+  s.Indent("4\n");
+  s.IndentLess(3);
+  s.Indent("1\n");
+  s.SetIndentLevel(0);
+  s.Indent("0\n");
+  EXPECT_EQ("0\n  2\n    4\n 1\n0\n", Value());
+}
+
+TEST_F(StreamTest, IndentMoreAndLess) {
+  EXPECT_EQ(0U, s.GetIndentLevel());
+  s.Indent("0\n");
+  s.IndentMore(2);
+  EXPECT_EQ(2U, s.GetIndentLevel());
+  s.Indent("2\n");
+  s.IndentMore(2);
+  EXPECT_EQ(4U, s.GetIndentLevel());
+  s.Indent("4\n");
+  s.IndentLess(3);
+  EXPECT_EQ(1U, s.GetIndentLevel());
+  s.Indent("1\n");
+  s.IndentLess(1);
+  EXPECT_EQ(0U, s.GetIndentLevel());
+  s.Indent("0\n");
+  EXPECT_EQ("0\n  2\n    4\n 1\n0\n", Value());
+}
+
+TEST_F(StreamTest, IndentLessNegative) {
+  s.Indent("0\n");
+  s.IndentLess(1);
+  EXPECT_EQ(0U, s.GetIndentLevel());
+  s.Indent("0\n");
+  s.IndentLess(1);
+  EXPECT_EQ(0U, s.GetIndentLevel());
+  s.Indent("0\n");
+  EXPECT_EQ("0\n0\n0\n", Value());
+}
+
+//------------------------------------------------------------------------------
 // Shift operator tests.
 //------------------------------------------------------------------------------
 
