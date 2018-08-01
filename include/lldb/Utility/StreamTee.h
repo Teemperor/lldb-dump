@@ -38,8 +38,7 @@ public:
       m_streams.push_back(stream_2_sp);
   }
 
-  StreamTee(const StreamTee &rhs)
-      : Stream(rhs), m_streams_mutex(), m_streams() {
+  StreamTee(const StreamTee &rhs) : m_streams_mutex(), m_streams() {
     // Don't copy until we lock down "rhs"
     std::lock_guard<std::recursive_mutex> guard(rhs.m_streams_mutex);
     m_streams = rhs.m_streams;

@@ -15,6 +15,7 @@
 #include "lldb/lldb-enumerations.h" // for ByteOrder::eByteOrderInvalid
 #include "llvm/ADT/StringRef.h"     // for StringRef
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <stdarg.h>
 #include <stddef.h>    // for size_t
@@ -51,6 +52,17 @@ public:
   ///
   //------------------------------------------------------------------
   Stream();
+
+  // FIXME: Streams should not be copyable.
+  Stream(const Stream &other) : m_forward(*this) { (*this) = other; }
+
+  Stream &operator=(const Stream &rhs) {
+    m_flags = rhs.m_flags;
+    m_addr_size = rhs.m_addr_size;
+    m_byte_order = rhs.m_byte_order;
+    m_indent_level = rhs.m_indent_level;
+    return *this;
+  }
 
   //------------------------------------------------------------------
   /// Destructor
@@ -548,6 +560,34 @@ protected:
   ///     The number of bytes that were appended to the stream.
   //------------------------------------------------------------------
   virtual size_t WriteImpl(const void *src, size_t src_len) = 0;
+
+  //----------------------------------------------------------------------
+  /// @class RawOstreamForward Stream.h "lldb/Utility/Stream.h"
+  /// This is a wrapper class that exposes a raw_ostream interface that just
+  /// forwards to an LLDB stream, allowing to reuse LLVM algorithms that take
+  /// a raw_ostream within the LLDB code base.
+  //----------------------------------------------------------------------
+  class RawOstreamForward : public llvm::raw_ostream {
+    // Note: This stream must *not* maintain its own buffer, but instead
+    // directly write everything to the internal Stream class. Without this,
+    // we would run into the problem that the Stream written byte count would
+    // differ from the actually written bytes by the size of the internal
+    // raw_ostream buffer.
+
+    Stream &m_forward_to;
+    void write_impl(const char *Ptr, size_t Size) override {
+      m_forward_to.Write(Ptr, Size);
+    }
+
+    uint64_t current_pos() const override {
+      return m_forward_to.GetWrittenBytes();
+    }
+
+  public:
+    RawOstreamForward(Stream &forward_to)
+        : llvm::raw_ostream(/*unbuffered*/ true), m_forward_to(forward_to) {}
+  };
+  RawOstreamForward m_forward;
 };
 
 } // namespace lldb_private
