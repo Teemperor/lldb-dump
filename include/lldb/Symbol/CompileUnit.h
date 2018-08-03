@@ -18,6 +18,8 @@
 #include "lldb/Utility/UserID.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "llvm/ADT/DenseMap.h"
+
 namespace lldb_private {
 //----------------------------------------------------------------------
 /// @class CompileUnit CompileUnit.h "lldb/Symbol/CompileUnit.h"
@@ -418,6 +420,9 @@ protected:
   std::vector<lldb::FunctionSP> m_functions; ///< The sparsely populated list of
                                              ///shared pointers to functions
   ///< that gets populated as functions get partially parsed.
+
+  /// Maps function UIDs to indexes in m_functions.
+  llvm::DenseMap<lldb::user_id_t, size_t> m_function_uid_to_index;
   std::vector<ConstString> m_imported_modules; ///< All modules, including the
                                                ///current module, imported by
                                                ///this

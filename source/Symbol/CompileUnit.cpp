@@ -106,6 +106,7 @@ void CompileUnit::Dump(Stream *s, bool show_context) const {
 // Add a function to this compile unit
 //----------------------------------------------------------------------
 void CompileUnit::AddFunction(FunctionSP &funcSP) {
+  m_function_uid_to_index[funcSP->GetID()] = m_functions.size();
   // TODO: order these by address
   m_functions.push_back(funcSP);
 }
@@ -163,18 +164,10 @@ FunctionSP CompileUnit::GetFunctionAtIndex(size_t idx) {
 //}
 
 FunctionSP CompileUnit::FindFunctionByUID(lldb::user_id_t func_uid) {
-  FunctionSP funcSP;
-  if (!m_functions.empty()) {
-    std::vector<FunctionSP>::const_iterator pos;
-    std::vector<FunctionSP>::const_iterator end = m_functions.end();
-    for (pos = m_functions.begin(); pos != end; ++pos) {
-      if ((*pos)->GetID() == func_uid) {
-        funcSP = *pos;
-        break;
-      }
-    }
-  }
-  return funcSP;
+  auto it = m_function_uid_to_index.find(func_uid);
+  if (it == m_function_uid_to_index.end())
+    return FunctionSP();
+  return m_functions[it->second];
 }
 
 lldb::LanguageType CompileUnit::GetLanguage() {
