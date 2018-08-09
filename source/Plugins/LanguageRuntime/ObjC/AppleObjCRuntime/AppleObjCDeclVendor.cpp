@@ -551,6 +551,7 @@ uint32_t
 AppleObjCDeclVendor::FindDecls(const ConstString &name, bool append,
                                uint32_t max_matches,
                                std::vector<clang::NamedDecl *> &decls) {
+  return 0;
   static unsigned int invocation_id = 0;
   unsigned int current_id = invocation_id++;
 

@@ -301,12 +301,15 @@ bool ExpressionSourceCode::GetText(std::string &text,
       break;
     case lldb::eLanguageTypeC:
       wrap_stream.Printf("@import std;\n"
-                         "void                           \n"
-                         "%s(void *$__lldb_arg)          \n"
-                         "{                              \n"
-                         "    %s;                        \n"
-                         "%s"
-                         "}                              \n",
+                         "std::vector<int> fakeptr;\n"
+                         "struct Car;\n"
+                         "std::shared_ptr<Car> fakeptr2;\n"
+                         "void\n"
+                         "%s(void *$__lldb_arg)\n"
+                         "{\n"
+                         "    %s;\n"
+                         "%s\n"
+                         "}\n",
                          m_name.c_str(), lldb_local_var_decls.GetData(),
                          tagged_body.c_str());
       break;

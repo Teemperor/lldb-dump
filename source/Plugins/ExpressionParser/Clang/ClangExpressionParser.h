@@ -153,8 +153,9 @@ private:
       m_builtin_context; ///< Context for Clang built-ins
   std::unique_ptr<clang::SelectorTable>
       m_selector_table; ///< Selector table for Objective-C methods
-  std::unique_ptr<clang::CodeGenerator>
+  clang::CodeGenerator *
       m_code_generator; ///< The Clang object that generates IR
+  std::unique_ptr<clang::ASTConsumer> Consumer;
 
   class LLDBPreprocessorCallbacks;
   LLDBPreprocessorCallbacks *m_pp_callbacks; ///< Called when the preprocessor

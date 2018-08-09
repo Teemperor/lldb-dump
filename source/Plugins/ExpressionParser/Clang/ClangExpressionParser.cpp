@@ -661,7 +661,88 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
 }
 
 ClangExpressionParser::~ClangExpressionParser() {}
+namespace {
 
+  /// ASTConsumer - This is an abstract interface that should be implemented by
+  /// clients that read ASTs.  This abstraction layer allows the client to be
+  /// independent of the AST producer (e.g. parser vs AST dump file reader, etc).
+  class ASTConsumerForwarder : public clang::ASTConsumer {
+    clang::ASTConsumer *m_c;
+
+  public:
+    ASTConsumerForwarder(clang::ASTConsumer *c) : m_c(c) { }
+
+    virtual ~ASTConsumerForwarder() {}
+
+    virtual void Initialize(ASTContext &Context) { m_c->Initialize(Context); }
+
+    virtual bool HandleTopLevelDecl(DeclGroupRef D) {
+      return m_c->HandleTopLevelDecl(D);
+    }
+
+    virtual void HandleInlineFunctionDefinition(FunctionDecl *D) {
+      m_c->HandleInlineFunctionDefinition(D);
+    }
+
+    virtual void HandleInterestingDecl(DeclGroupRef D) {
+      m_c->HandleInterestingDecl(D);
+    }
+
+    virtual void HandleTranslationUnit(ASTContext &Ctx) {
+      m_c->HandleTranslationUnit(Ctx);
+    }
+
+    virtual void HandleTagDeclDefinition(TagDecl *D) {
+      m_c->HandleTagDeclDefinition(D);
+    }
+
+    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) {
+      m_c->HandleTagDeclRequiredDefinition(D);
+    }
+
+    virtual void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) {
+      m_c->HandleCXXImplicitFunctionInstantiation(D);
+    }
+
+    virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
+      m_c->HandleTopLevelDeclInObjCContainer(D);
+    }
+
+    virtual void HandleImplicitImportDecl(ImportDecl *D) {
+      m_c->HandleImplicitImportDecl(D);
+    }
+
+    virtual void CompleteTentativeDefinition(VarDecl *D) {
+      m_c->CompleteTentativeDefinition(D);
+    }
+
+    virtual void AssignInheritanceModel(CXXRecordDecl *RD) {
+      m_c->AssignInheritanceModel(RD);
+    }
+
+    virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *D) {
+      m_c->HandleCXXStaticMemberVarInstantiation(D);
+    }
+
+    virtual void HandleVTable(CXXRecordDecl *RD) {
+      m_c->HandleVTable(RD);
+    }
+
+    virtual ASTMutationListener *GetASTMutationListener() { return m_c->GetASTMutationListener(); }
+
+    virtual ASTDeserializationListener *GetASTDeserializationListener() {
+      return m_c->GetASTDeserializationListener();
+    }
+
+    virtual void PrintStats() {
+      m_c->PrintStats();
+    }
+
+    virtual bool shouldSkipFunctionBody(Decl *D) {
+      return m_c->shouldSkipFunctionBody(D);
+    }
+  };
+}
 unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
   ClangDiagnosticManagerAdapter *adapter =
       static_cast<ClangDiagnosticManagerAdapter *>(
@@ -717,30 +798,40 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
 
   diag_buf->BeginSourceFile(m_compiler->getLangOpts(),
                             &m_compiler->getPreprocessor());
+  auto &PP = m_compiler->getPreprocessor();
 
+  PP.getBuiltinInfo().initializeBuiltins(PP.getIdentifierTable(),
+                                         PP.getLangOpts());
 
   if (ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap())
-    decl_map->InstallCodeGenerator(m_code_generator.get());
+    decl_map->InstallCodeGenerator(m_code_generator);
 
 
   std::string module_name("$__lldb_module");
   m_llvm_context.reset(new LLVMContext());
-  m_code_generator.reset(CreateLLVMCodeGen(
+  m_code_generator = CreateLLVMCodeGen(
       m_compiler->getDiagnostics(), module_name,
       m_compiler->getHeaderSearchOpts(), m_compiler->getPreprocessorOpts(),
-      m_compiler->getCodeGenOpts(), *m_llvm_context));
+      m_compiler->getCodeGenOpts(), *m_llvm_context);
 
   ASTConsumer *ast_transformer =
-      type_system_helper->ASTTransformer(m_code_generator.get());
+      type_system_helper->ASTTransformer(m_code_generator);
 
-  ASTConsumer *Consumer = ast_transformer ? ast_transformer : m_code_generator.get();
+  std::unique_ptr<ASTConsumer> Consumer;
+  if (ast_transformer) {
+    std::unique_ptr<ASTConsumer> ast_transformer_proxy;
+    ast_transformer_proxy.reset(new ASTConsumerForwarder(ast_transformer));
+    Consumer = std::move(ast_transformer_proxy);
+  } else {
+    Consumer.reset(m_code_generator);
+  }
   Consumer->Initialize(*ast_context);
 
   m_compiler->setSema(new Sema(m_compiler->getPreprocessor(), m_compiler->getASTContext(),
                                *Consumer, TU_Complete, nullptr));
+  m_compiler->setASTConsumer(std::move(Consumer));
 
   m_compiler->createModuleManager();
-
 
   if (decl_map) {
     ExternalASTSourceWrapper *wrapper = new ExternalASTSourceWrapper(ast_context->getExternalSource());
