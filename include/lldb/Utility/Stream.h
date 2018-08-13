@@ -550,7 +550,7 @@ protected:
   int m_indent_level; ///< Indention level.
   std::size_t m_bytes_written = 0; ///< Number of bytes written so far.
 
-  size_t _PutHex8(uint8_t uvalue, bool add_prefix);
+  void _PutHex8(uint8_t uvalue, bool add_prefix);
 
   //------------------------------------------------------------------
   /// Output character bytes to the stream.
