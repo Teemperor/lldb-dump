@@ -544,6 +544,9 @@ void ClangASTImporter::CompleteDecl(clang::Decl *decl) {
 }
 
 bool ClangASTImporter::CompleteTagDecl(clang::TagDecl *decl) {
+  if (decl->getNameAsString() == "shared_ptr")
+    return true;
+
   ClangASTMetrics::RegisterDeclCompletion();
 
   DeclOrigin decl_origin = GetDeclOrigin(decl);

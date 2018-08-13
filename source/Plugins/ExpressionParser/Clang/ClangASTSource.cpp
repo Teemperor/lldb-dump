@@ -604,6 +604,11 @@ void ClangASTSource::FindExternalLexicalDecls(
   if (TagDecl *original_tag_decl = dyn_cast<TagDecl>(original_decl)) {
     ExternalASTSource *external_source = original_ctx->getExternalSource();
 
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(original_tag_decl)) {
+        if (ND->getNameAsString() == "shared_ptr")
+          return;
+    }
+
     if (external_source)
       external_source->CompleteType(original_tag_decl);
   }
