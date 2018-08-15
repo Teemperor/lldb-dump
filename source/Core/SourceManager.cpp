@@ -163,7 +163,9 @@ size_t SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile(
     const SymbolContextList *bp_locs) {
   if (count == 0)
     return 0;
-  size_t return_value = 0;
+
+  Stream::ByteDelta delta(*s);
+
   if (start_line == 0) {
     if (m_last_line != 0 && m_last_line != UINT32_MAX)
       start_line = m_last_line + m_last_count;
@@ -198,9 +200,8 @@ size_t SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile(
           ::snprintf(prefix, sizeof(prefix), "    ");
       }
 
-      return_value +=
-          s->Printf("%s%2.2s %-4u\t", prefix,
-                    line == curr_line ? current_line_cstr : "", line);
+      s->Printf("%s%2.2s %-4u\t", prefix,
+                line == curr_line ? current_line_cstr : "", line);
       size_t this_line_size = m_last_file_sp->DisplaySourceLines(
           line, line == curr_line ? column : 0, 0, 0, s);
       if (column != 0 && line == curr_line &&
@@ -208,21 +209,20 @@ size_t SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile(
         // Display caret cursor.
         std::string src_line;
         m_last_file_sp->GetLine(line, src_line);
-        return_value += s->Printf("    \t");
+        s->Printf("    \t");
         // Insert a space for every non-tab character in the source line.
         for (size_t i = 0; i + 1 < column && i < src_line.length(); ++i)
-          return_value += s->PutChar(src_line[i] == '\t' ? '\t' : ' ');
+          s->PutChar(src_line[i] == '\t' ? '\t' : ' ');
         // Now add the caret.
-        return_value += s->Printf("^\n");
+        s->Printf("^\n");
       }
       if (this_line_size == 0) {
         m_last_line = UINT32_MAX;
         break;
-      } else
-        return_value += this_line_size;
+      }
     }
   }
-  return return_value;
+  return *delta;
 }
 
 size_t SourceManager::DisplaySourceLinesWithLineNumbers(
