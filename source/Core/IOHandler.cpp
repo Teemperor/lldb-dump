@@ -76,6 +76,9 @@
 using namespace lldb;
 using namespace lldb_private;
 
+IOHandler::IOHandler() : m_popped(false) {
+}
+
 IOHandler::IOHandler(Debugger &debugger, IOHandler::Type type)
     : IOHandler(debugger, type,
                 StreamFileSP(), // Adopt STDIN from top input reader
@@ -88,7 +91,7 @@ IOHandler::IOHandler(Debugger &debugger, IOHandler::Type type,
                      const lldb::StreamFileSP &input_sp,
                      const lldb::StreamFileSP &output_sp,
                      const lldb::StreamFileSP &error_sp, uint32_t flags)
-    : m_debugger(debugger), m_input_sp(input_sp), m_output_sp(output_sp),
+    : m_debugger(&debugger), m_input_sp(input_sp), m_output_sp(output_sp),
       m_error_sp(error_sp), m_popped(false), m_flags(flags), m_type(type),
       m_user_data(nullptr), m_done(false), m_active(false) {
   // If any files are not specified, then adopt them from the top input reader.

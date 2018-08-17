@@ -54,6 +54,8 @@ public:
     Other
   };
 
+  IOHandler();
+
   IOHandler(Debugger &debugger, IOHandler::Type type);
 
   IOHandler(Debugger &debugger, IOHandler::Type type,
@@ -127,7 +129,7 @@ public:
 
   lldb::StreamFileSP &GetErrorStreamFile();
 
-  Debugger &GetDebugger() { return m_debugger; }
+  Debugger &GetDebugger() { assert(m_debugger); return *m_debugger; }
 
   void *GetUserData() { return m_user_data; }
 
@@ -166,16 +168,16 @@ public:
   }
 
 protected:
-  Debugger &m_debugger;
+  Debugger *m_debugger = nullptr;
   lldb::StreamFileSP m_input_sp;
   lldb::StreamFileSP m_output_sp;
   lldb::StreamFileSP m_error_sp;
   Predicate<bool> m_popped;
   Flags m_flags;
   Type m_type;
-  void *m_user_data;
-  bool m_done;
-  bool m_active;
+  void *m_user_data = nullptr;
+  bool m_done = false;
+  bool m_active = false;
 
 private:
   DISALLOW_COPY_AND_ASSIGN(IOHandler);
