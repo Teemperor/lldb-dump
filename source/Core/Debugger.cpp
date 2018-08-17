@@ -1098,7 +1098,11 @@ void Debugger::PushIOHandler(const IOHandlerSP &reader_sp) {
   // this new input reader take over
   if (top_reader_sp) {
     top_reader_sp->Deactivate();
-    top_reader_sp->Cancel();
+    // For the ProcessIO handler we don't cancel the current IOHandler. The
+    // current IOHandler shouldn't be influenced by the fact that the temporary
+    // ProcessIO handler has hijacked the IO.
+    if (reader_sp->GetType() != IOHandler::Type::ProcessIO)
+      top_reader_sp->Cancel();
   }
 }
 
