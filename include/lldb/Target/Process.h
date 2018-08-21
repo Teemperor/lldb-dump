@@ -431,6 +431,10 @@ public:
       m_last_user_expression_resume = m_resume_id;
   }
 
+  bool IsRunningUtilityFunction() const {
+    return m_last_natural_stop_id != m_stop_id;
+  }
+
   uint32_t GetStopID() const { return m_stop_id; }
   uint32_t GetLastNaturalStopID() const { return m_last_natural_stop_id; }
   uint32_t GetMemoryID() const { return m_memory_id; }

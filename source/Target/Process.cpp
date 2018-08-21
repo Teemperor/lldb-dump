@@ -4685,7 +4685,12 @@ bool Process::PushProcessIOHandler() {
       log->Printf("Process::%s pushing IO handler", __FUNCTION__);
 
     io_handler_sp->SetIsDone(false);
-    GetTarget().GetDebugger().PushIOHandler(io_handler_sp);
+    // If we evaluate an utility function, then we don't cancel the current
+    // IOHandler. Our IOHandler is non-interactive and shouldn't disturb the
+    // existing IOHandler that potentially provides the user interface (e.g.
+    // the IOHandler for Editline).
+    bool cancel_top_handler = m_mod_id.IsRunningUtilityFunction();
+    GetTarget().GetDebugger().PushIOHandler(io_handler_sp, cancel_top_handler);
     return true;
   }
   return false;
