@@ -156,8 +156,6 @@ TEST_F(CompletionTest, DirCompletionAbsolute) {
   // by asserting an exact result count, and verifying against known
   // folders.
 
-  std::string Prefixes[] = {(Twine(BaseDir) + "/").str(), ""};
-
   StandardTildeExpressionResolver Resolver;
   StringList Results;
 
@@ -170,7 +168,12 @@ TEST_F(CompletionTest, DirCompletionAbsolute) {
   EXPECT_TRUE(HasEquivalentFile(BaseDir, Results));
 
   // When the same directory ends with a slash, it finds all children.
-  Count = CommandCompletions::DiskDirectories(Prefixes[0], Results, Resolver);
+  std::string Prefix = BaseDir.str().str() + "/";
+  // Sanity check that the path we complete on exists and isn't too long.
+  ASSERT_TRUE(llvm::sys::fs::exists(Prefix));
+  ASSERT_LE(Prefix.size(), static_cast<size_t>(PATH_MAX));
+
+  Count = CommandCompletions::DiskDirectories(Prefix, Results, Resolver);
   ASSERT_EQ(7u, Count);
   ASSERT_EQ(Count, Results.GetSize());
   EXPECT_TRUE(HasEquivalentFile(DirFoo, Results));
