@@ -149,8 +149,8 @@ private:
       m_file_manager; ///< The Clang file manager object used by the compiler
   std::unique_ptr<clang::CompilerInstance>
       m_compiler; ///< The Clang compiler used to parse expressions into IR
-  std::unique_ptr<clang::CodeGenerator>
-      m_code_generator; ///< The Clang object that generates IR
+  /// The Clang object that generates IR
+  clang::CodeGenerator *m_code_generator = nullptr;
 
   class LLDBPreprocessorCallbacks;
   LLDBPreprocessorCallbacks *m_pp_callbacks; ///< Called when the preprocessor

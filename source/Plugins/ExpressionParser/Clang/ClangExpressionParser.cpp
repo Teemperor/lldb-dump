@@ -222,7 +222,7 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
                                              Expression &expr,
                                              bool generate_debug_info)
     : ExpressionParser(exe_scope, expr, generate_debug_info), m_compiler(),
-      m_code_generator(), m_pp_callbacks(nullptr) {
+      m_pp_callbacks(nullptr) {
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
 
   // We can't compile expressions without a target.  So if the exe_scope is
@@ -543,10 +543,13 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
   std::string module_name("$__lldb_module");
 
   m_llvm_context.reset(new LLVMContext());
-  m_code_generator.reset(CreateLLVMCodeGen(
+  m_code_generator = CreateLLVMCodeGen(
       m_compiler->getDiagnostics(), module_name,
       m_compiler->getHeaderSearchOpts(), m_compiler->getPreprocessorOpts(),
-      m_compiler->getCodeGenOpts(), *m_llvm_context));
+      m_compiler->getCodeGenOpts(), *m_llvm_context);
+
+  std::unique_ptr<clang::ASTConsumer> consumer(m_code_generator);
+  m_compiler->setASTConsumer(std::move(consumer));
 }
 
 ClangExpressionParser::~ClangExpressionParser() {}
@@ -605,10 +608,10 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
       dyn_cast<ClangExpressionHelper>(m_expr.GetTypeSystemHelper());
 
   ASTConsumer *ast_transformer =
-      type_system_helper->ASTTransformer(m_code_generator.get());
+      type_system_helper->ASTTransformer(m_code_generator);
 
   if (ClangExpressionDeclMap *decl_map = type_system_helper->DeclMap())
-    decl_map->InstallCodeGenerator(m_code_generator.get());
+    decl_map->InstallCodeGenerator(m_code_generator);
 
   if (ast_transformer) {
     ast_transformer->Initialize(m_compiler->getASTContext());
@@ -616,7 +619,7 @@ unsigned ClangExpressionParser::Parse(DiagnosticManager &diagnostic_manager) {
              m_compiler->getASTContext());
   } else {
     m_code_generator->Initialize(m_compiler->getASTContext());
-    ParseAST(m_compiler->getPreprocessor(), m_code_generator.get(),
+    ParseAST(m_compiler->getPreprocessor(), m_code_generator,
              m_compiler->getASTContext());
   }
 
