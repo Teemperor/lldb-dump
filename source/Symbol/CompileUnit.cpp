@@ -23,8 +23,8 @@ CompileUnit::CompileUnit(const lldb::ModuleSP &module_sp, void *user_data,
                          lldb_private::LazyBool is_optimized)
     : ModuleChild(module_sp), FileSpec(pathname, false), UserID(cu_sym_id),
       m_user_data(user_data), m_language(language), m_flags(0),
-      m_support_files(), m_line_table_ap(), m_variables(),
-      m_is_optimized(is_optimized) {
+      m_support_files(), m_line_table_ap(), m_variables() {
+  m_is_optimized = is_optimized;
   if (language != eLanguageTypeUnknown)
     m_flags.Set(flagsParsedLanguage);
   assert(module_sp);
@@ -36,8 +36,8 @@ CompileUnit::CompileUnit(const lldb::ModuleSP &module_sp, void *user_data,
                          lldb_private::LazyBool is_optimized)
     : ModuleChild(module_sp), FileSpec(fspec), UserID(cu_sym_id),
       m_user_data(user_data), m_language(language), m_flags(0),
-      m_support_files(), m_line_table_ap(), m_variables(),
-      m_is_optimized(is_optimized) {
+      m_support_files(), m_line_table_ap(), m_variables() {
+  m_is_optimized = is_optimized;
   if (language != eLanguageTypeUnknown)
     m_flags.Set(flagsParsedLanguage);
   assert(module_sp);
@@ -382,17 +382,14 @@ uint32_t CompileUnit::ResolveSymbolContext(const FileSpec &file_spec,
   return sc_list.GetSize() - prev_size;
 }
 
-bool CompileUnit::GetIsOptimized() {
-  if (m_is_optimized == eLazyBoolCalculate) {
-    m_is_optimized = eLazyBoolNo;
-    if (SymbolVendor *symbol_vendor = GetModule()->GetSymbolVendor()) {
-      SymbolContext sc;
-      CalculateSymbolContext(&sc);
-      if (symbol_vendor->ParseCompileUnitIsOptimized(sc))
-        m_is_optimized = eLazyBoolYes;
-    }
+bool CompileUnit::UpdateOptimized() {
+  if (SymbolVendor *symbol_vendor = GetModule()->GetSymbolVendor()) {
+    SymbolContext sc;
+    CalculateSymbolContext(&sc);
+    if (symbol_vendor->ParseCompileUnitIsOptimized(sc))
+      return true;
   }
-  return m_is_optimized;
+  return false;
 }
 
 void CompileUnit::SetVariableList(VariableListSP &variables) {

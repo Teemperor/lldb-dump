@@ -69,21 +69,21 @@ protected:
 
   const char *GetRootNameForDisplay(const char *if_fail = nullptr);
 
-  bool ShouldPrintValueObject();
+  bool ShouldPrintValueObject() { return m_should_print.get(*this); }
 
   bool ShouldPrintValidation();
 
-  bool IsNil();
+  bool IsNil() { return m_is_nil.get(*this); }
 
-  bool IsUninitialized();
+  bool IsUninitialized() { return m_is_uninit.get(*this); }
 
-  bool IsPtr();
+  bool IsPtr() { return m_is_ptr.get(*this); }
 
-  bool IsRef();
+  bool IsRef() { return m_is_ref.get(*this); }
 
-  bool IsInstancePointer();
+  bool IsInstancePointer() { return m_is_instance_ptr.get(*this); }
 
-  bool IsAggregate();
+  bool IsAggregate() { return m_is_aggregate.get(*this); }
 
   bool PrintValidationMarkerIfNeeded();
 
@@ -142,13 +142,24 @@ private:
   CompilerType m_compiler_type;
   DumpValueObjectOptions::PointerDepth m_ptr_depth;
   uint32_t m_curr_depth;
-  LazyBool m_should_print;
-  LazyBool m_is_nil;
-  LazyBool m_is_uninit;
-  LazyBool m_is_ptr;
-  LazyBool m_is_ref;
-  LazyBool m_is_aggregate;
-  LazyBool m_is_instance_ptr;
+
+  bool CalcShouldPrint();
+  bool CalcIsNil();
+  bool CalcIsUnit();
+  bool CalcIsPtr();
+  bool CalcIsRef();
+  bool CalcIsAggregate();
+  bool CalcIsInstancePtr();
+
+#define LLDB_VOP ValueObjectPrinter
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcShouldPrint> m_should_print;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsNil> m_is_nil;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsUnit> m_is_uninit;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsPtr> m_is_ptr;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsRef> m_is_ref;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsAggregate> m_is_aggregate;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::CalcIsInstancePtr> m_is_instance_ptr;
+#undef LLDB_VOP
   std::pair<TypeSummaryImpl *, bool> m_summary_formatter;
   std::string m_value;
   std::string m_summary;

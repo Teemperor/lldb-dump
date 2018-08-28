@@ -90,77 +90,13 @@ public:
       : Instruction(address, addr_class),
         m_disasm_wp(std::static_pointer_cast<DisassemblerLLVMC>(
             disasm.shared_from_this())),
-        m_does_branch(eLazyBoolCalculate), m_has_delay_slot(eLazyBoolCalculate),
-        m_is_call(eLazyBoolCalculate), m_is_valid(false),
-        m_using_file_addr(false) {}
+        m_is_valid(false), m_using_file_addr(false) {}
 
   ~InstructionLLVMC() override = default;
 
-  bool DoesBranch() override {
-    if (m_does_branch == eLazyBoolCalculate) {
-      DisassemblerScope disasm(*this);
-      if (disasm) {
-        DataExtractor data;
-        if (m_opcode.GetData(data)) {
-          bool is_alternate_isa;
-          lldb::addr_t pc = m_address.GetFileAddress();
+  bool DoesBranch() override { return m_does_branch.get(*this); }
 
-          DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
-              GetDisasmToUse(is_alternate_isa, disasm);
-          const uint8_t *opcode_data = data.GetDataStart();
-          const size_t opcode_data_len = data.GetByteSize();
-          llvm::MCInst inst;
-          const size_t inst_size =
-              mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
-          // Be conservative, if we didn't understand the instruction, say it
-          // might branch...
-          if (inst_size == 0)
-            m_does_branch = eLazyBoolYes;
-          else {
-            const bool can_branch = mc_disasm_ptr->CanBranch(inst);
-            if (can_branch)
-              m_does_branch = eLazyBoolYes;
-            else
-              m_does_branch = eLazyBoolNo;
-          }
-        }
-      }
-    }
-    return m_does_branch == eLazyBoolYes;
-  }
-
-  bool HasDelaySlot() override {
-    if (m_has_delay_slot == eLazyBoolCalculate) {
-      DisassemblerScope disasm(*this);
-      if (disasm) {
-        DataExtractor data;
-        if (m_opcode.GetData(data)) {
-          bool is_alternate_isa;
-          lldb::addr_t pc = m_address.GetFileAddress();
-
-          DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
-              GetDisasmToUse(is_alternate_isa, disasm);
-          const uint8_t *opcode_data = data.GetDataStart();
-          const size_t opcode_data_len = data.GetByteSize();
-          llvm::MCInst inst;
-          const size_t inst_size =
-              mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
-          // if we didn't understand the instruction, say it doesn't have a
-          // delay slot...
-          if (inst_size == 0)
-            m_has_delay_slot = eLazyBoolNo;
-          else {
-            const bool has_delay_slot = mc_disasm_ptr->HasDelaySlot(inst);
-            if (has_delay_slot)
-              m_has_delay_slot = eLazyBoolYes;
-            else
-              m_has_delay_slot = eLazyBoolNo;
-          }
-        }
-      }
-    }
-    return m_has_delay_slot == eLazyBoolYes;
-  }
+  bool HasDelaySlot() override { return m_has_delay_slot.get(*this); }
 
   DisassemblerLLVMC::MCDisasmInstance *GetDisasmToUse(bool &is_alternate_isa) {
     DisassemblerScope disasm(*this);
@@ -870,41 +806,96 @@ public:
     return true;
   }
 
-  bool IsCall() override {
-    if (m_is_call == eLazyBoolCalculate) {
-      DisassemblerScope disasm(*this);
-      if (disasm) {
-        DataExtractor data;
-        if (m_opcode.GetData(data)) {
-          bool is_alternate_isa;
-          lldb::addr_t pc = m_address.GetFileAddress();
+  bool IsCall() override { return m_is_call.get(*this); }
 
-          DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
-              GetDisasmToUse(is_alternate_isa, disasm);
-          const uint8_t *opcode_data = data.GetDataStart();
-          const size_t opcode_data_len = data.GetByteSize();
-          llvm::MCInst inst;
-          const size_t inst_size =
-              mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
-          if (inst_size == 0) {
-            m_is_call = eLazyBoolNo;
-          } else {
-            if (mc_disasm_ptr->IsCall(inst))
-              m_is_call = eLazyBoolYes;
-            else
-              m_is_call = eLazyBoolNo;
-          }
+protected:
+  bool UpdateDoesBranch() {
+    DisassemblerScope disasm(*this);
+    if (disasm) {
+      DataExtractor data;
+      if (m_opcode.GetData(data)) {
+        bool is_alternate_isa;
+        lldb::addr_t pc = m_address.GetFileAddress();
+
+        DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
+            GetDisasmToUse(is_alternate_isa, disasm);
+        const uint8_t *opcode_data = data.GetDataStart();
+        const size_t opcode_data_len = data.GetByteSize();
+        llvm::MCInst inst;
+        const size_t inst_size =
+            mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
+        // Be conservative, if we didn't understand the instruction, say it
+        // might branch...
+        if (inst_size == 0)
+          return true;
+        else {
+          const bool can_branch = mc_disasm_ptr->CanBranch(inst);
+          return can_branch;
         }
       }
     }
-    return m_is_call == eLazyBoolYes;
+    return false;
   }
 
-protected:
+  bool UpdateHasDelaySlot() {
+    DisassemblerScope disasm(*this);
+    if (disasm) {
+      DataExtractor data;
+      if (m_opcode.GetData(data)) {
+        bool is_alternate_isa;
+        lldb::addr_t pc = m_address.GetFileAddress();
+
+        DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
+            GetDisasmToUse(is_alternate_isa, disasm);
+        const uint8_t *opcode_data = data.GetDataStart();
+        const size_t opcode_data_len = data.GetByteSize();
+        llvm::MCInst inst;
+        const size_t inst_size =
+            mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
+        // if we didn't understand the instruction, say it doesn't have a
+        // delay slot...
+        if (inst_size == 0)
+          return false;
+        else {
+          const bool has_delay_slot = mc_disasm_ptr->HasDelaySlot(inst);
+          return has_delay_slot;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool UpdateIsCall() {
+    DisassemblerScope disasm(*this);
+    if (disasm) {
+      DataExtractor data;
+      if (m_opcode.GetData(data)) {
+        bool is_alternate_isa;
+        lldb::addr_t pc = m_address.GetFileAddress();
+
+        DisassemblerLLVMC::MCDisasmInstance *mc_disasm_ptr =
+            GetDisasmToUse(is_alternate_isa, disasm);
+        const uint8_t *opcode_data = data.GetDataStart();
+        const size_t opcode_data_len = data.GetByteSize();
+        llvm::MCInst inst;
+        const size_t inst_size =
+            mc_disasm_ptr->GetMCInst(opcode_data, opcode_data_len, pc, inst);
+        if (inst_size == 0) {
+          return false;
+        } else {
+          return mc_disasm_ptr->IsCall(inst);
+        }
+      }
+    }
+    return false;
+  }
+
   std::weak_ptr<DisassemblerLLVMC> m_disasm_wp;
-  LazyBool m_does_branch;
-  LazyBool m_has_delay_slot;
-  LazyBool m_is_call;
+  LazyBoolMember<InstructionLLVMC, &InstructionLLVMC::UpdateDoesBranch>
+      m_does_branch;
+  LazyBoolMember<InstructionLLVMC, &InstructionLLVMC::UpdateHasDelaySlot>
+      m_has_delay_slot;
+  LazyBoolMember<InstructionLLVMC, &InstructionLLVMC::UpdateIsCall> m_is_call;
   bool m_is_valid;
   bool m_using_file_addr;
 

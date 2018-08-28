@@ -208,7 +208,6 @@ protected:
   uint32_t m_producer_version_update = 0;
   lldb::LanguageType m_language_type = lldb::eLanguageTypeUnknown;
   bool m_is_dwarf64 = false;
-  lldb_private::LazyBool m_is_optimized = lldb_private::eLazyBoolCalculate;
   dw_addr_t m_addr_base = 0;   // Value of DW_AT_addr_base
   dw_addr_t m_ranges_base = 0; // Value of DW_AT_ranges_base
   // If this is a dwo compile unit this is the offset of the base compile unit
@@ -222,6 +221,10 @@ private:
   void ParseProducerInfo();
   void ExtractDIEsRWLocked();
   void ClearDIEsRWLocked();
+
+  bool UpdateIsOptimized();
+  lldb_private::LazyBoolMember<DWARFUnit, &DWARFUnit::UpdateIsOptimized>
+      m_is_optimized;
 
   // Get the DWARF unit DWARF debug informration entry. Parse the single DIE
   // if needed.

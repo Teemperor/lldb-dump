@@ -53,9 +53,7 @@ public:
   // implementations of the runtime, and more might come
   class ClassDescriptor {
   public:
-    ClassDescriptor()
-        : m_is_kvo(eLazyBoolCalculate), m_is_cf(eLazyBoolCalculate),
-          m_type_wp() {}
+    ClassDescriptor() = default;
 
     virtual ~ClassDescriptor() = default;
 
@@ -67,27 +65,11 @@ public:
 
     // virtual if any implementation has some other version-specific rules but
     // for the known v1/v2 this is all that needs to be done
-    virtual bool IsKVO() {
-      if (m_is_kvo == eLazyBoolCalculate) {
-        const char *class_name = GetClassName().AsCString();
-        if (class_name && *class_name)
-          m_is_kvo =
-              (LazyBool)(strstr(class_name, "NSKVONotifying_") == class_name);
-      }
-      return (m_is_kvo == eLazyBoolYes);
-    }
+    virtual bool IsKVO() { return m_is_kvo.get(*this); }
 
     // virtual if any implementation has some other version-specific rules but
     // for the known v1/v2 this is all that needs to be done
-    virtual bool IsCFType() {
-      if (m_is_cf == eLazyBoolCalculate) {
-        const char *class_name = GetClassName().AsCString();
-        if (class_name && *class_name)
-          m_is_cf = (LazyBool)(strcmp(class_name, "__NSCFType") == 0 ||
-                               strcmp(class_name, "NSCFType") == 0);
-      }
-      return (m_is_cf == eLazyBoolYes);
-    }
+    virtual bool IsCFType() { return m_is_cf.get(*this); }
 
     virtual bool IsValid() = 0;
 
@@ -139,8 +121,23 @@ public:
                         bool check_version_specific = false) const;
 
   private:
-    LazyBool m_is_kvo;
-    LazyBool m_is_cf;
+    bool CalcKVO() {
+      const char *class_name = GetClassName().AsCString();
+      if (class_name && *class_name)
+        return strstr(class_name, "NSKVONotifying_") == class_name;
+      return false; // FIXME: This is wrong.
+    }
+
+    bool CalcCFType() {
+      const char *class_name = GetClassName().AsCString();
+      if (class_name && *class_name)
+        return strcmp(class_name, "__NSCFType") == 0 ||
+               strcmp(class_name, "NSCFType") == 0;
+      return false; // FIXME: This is wrong.
+    }
+
+    LazyBoolMember<ClassDescriptor, &ClassDescriptor::CalcKVO> m_is_kvo;
+    LazyBoolMember<ClassDescriptor, &ClassDescriptor::CalcCFType> m_is_cf;
     lldb::TypeWP m_type_wp;
   };
 
@@ -280,14 +277,7 @@ public:
   }
 
   bool HasNewLiteralsAndIndexing() {
-    if (m_has_new_literals_and_indexing == eLazyBoolCalculate) {
-      if (CalculateHasNewLiteralsAndIndexing())
-        m_has_new_literals_and_indexing = eLazyBoolYes;
-      else
-        m_has_new_literals_and_indexing = eLazyBoolNo;
-    }
-
-    return (m_has_new_literals_and_indexing == eLazyBoolYes);
+    return m_has_new_literals_and_indexing.get(*this);
   }
 
   virtual void SymbolsDidLoad(const ModuleList &module_list) {
@@ -379,7 +369,9 @@ private:
   typedef ThreadSafeDenseMap<void *, uint64_t> TypeSizeCache;
 
   MsgImplMap m_impl_cache;
-  LazyBool m_has_new_literals_and_indexing;
+  LazyBoolMember<ObjCLanguageRuntime,
+                 &ObjCLanguageRuntime::CalculateHasNewLiteralsAndIndexing>
+      m_has_new_literals_and_indexing;
   ISAToDescriptorMap m_isa_to_descriptor;
   HashToISAMap m_hash_to_isa_map;
   TypeSizeCache m_type_size_cache;

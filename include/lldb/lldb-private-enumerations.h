@@ -135,6 +135,44 @@ typedef enum LazyBool {
   eLazyBoolYes = 1
 } LazyBool;
 
+template <typename Class, bool (Class::*Update)()> struct LazyBoolMember {
+  unsigned Value : 1;
+  unsigned NeedsUpdate : 1;
+
+public:
+  LazyBoolMember() { NeedsUpdate = true; }
+  bool get(Class &C) {
+    if (NeedsUpdate) {
+      Value = (C.*Update)();
+      NeedsUpdate = false;
+    }
+    return Value;
+  }
+  LazyBool operator=(LazyBool b) {
+    if (b == eLazyBoolCalculate) {
+      NeedsUpdate = true;
+      return b;
+    }
+
+    NeedsUpdate = false;
+    Value = b == eLazyBoolYes;
+    return b;
+  }
+  bool operator==(LazyBool b) const {
+    switch (b) {
+    case eLazyBoolCalculate:
+      return NeedsUpdate;
+      break;
+    case eLazyBoolNo:
+      return !NeedsUpdate && !Value;
+      break;
+    case eLazyBoolYes:
+      return !NeedsUpdate && Value;
+      break;
+    }
+  }
+};
+
 //------------------------------------------------------------------
 /// Instruction types
 //------------------------------------------------------------------

@@ -35,7 +35,6 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime() {}
 
 ObjCLanguageRuntime::ObjCLanguageRuntime(Process *process)
     : LanguageRuntime(process), m_impl_cache(),
-      m_has_new_literals_and_indexing(eLazyBoolCalculate),
       m_isa_to_descriptor(), m_hash_to_isa_map(), m_type_size_cache(),
       m_isa_to_descriptor_stop_id(UINT32_MAX), m_complete_class_cache(),
       m_negative_complete_class_cache() {}

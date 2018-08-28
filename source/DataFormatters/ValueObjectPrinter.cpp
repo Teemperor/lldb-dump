@@ -57,13 +57,6 @@ void ValueObjectPrinter::Init(
   m_curr_depth = curr_depth;
   assert(m_orig_valobj && "cannot print a NULL ValueObject");
   assert(m_stream && "cannot print to a NULL Stream");
-  m_should_print = eLazyBoolCalculate;
-  m_is_nil = eLazyBoolCalculate;
-  m_is_uninit = eLazyBoolCalculate;
-  m_is_ptr = eLazyBoolCalculate;
-  m_is_ref = eLazyBoolCalculate;
-  m_is_aggregate = eLazyBoolCalculate;
-  m_is_instance_ptr = eLazyBoolCalculate;
   m_summary_formatter = {nullptr, false};
   m_value.assign("");
   m_summary.assign("");
@@ -167,57 +160,35 @@ const char *ValueObjectPrinter::GetRootNameForDisplay(const char *if_fail) {
   return root_valobj_name ? root_valobj_name : if_fail;
 }
 
-bool ValueObjectPrinter::ShouldPrintValueObject() {
-  if (m_should_print == eLazyBoolCalculate)
-    m_should_print =
-        (m_options.m_flat_output == false || m_type_flags.Test(eTypeHasValue))
-            ? eLazyBoolYes
-            : eLazyBoolNo;
-  return m_should_print == eLazyBoolYes;
+bool ValueObjectPrinter::CalcShouldPrint() {
+  return m_options.m_flat_output == false || m_type_flags.Test(eTypeHasValue);
 }
 
-bool ValueObjectPrinter::IsNil() {
-  if (m_is_nil == eLazyBoolCalculate)
-    m_is_nil = m_valobj->IsNilReference() ? eLazyBoolYes : eLazyBoolNo;
-  return m_is_nil == eLazyBoolYes;
+bool ValueObjectPrinter::CalcIsNil() { return m_valobj->IsNilReference(); }
+
+bool ValueObjectPrinter::CalcIsUnit() {
+  return m_valobj->IsUninitializedReference();
 }
 
-bool ValueObjectPrinter::IsUninitialized() {
-  if (m_is_uninit == eLazyBoolCalculate)
-    m_is_uninit =
-        m_valobj->IsUninitializedReference() ? eLazyBoolYes : eLazyBoolNo;
-  return m_is_uninit == eLazyBoolYes;
+bool ValueObjectPrinter::CalcIsPtr() {
+  return m_type_flags.Test(eTypeIsPointer);
 }
 
-bool ValueObjectPrinter::IsPtr() {
-  if (m_is_ptr == eLazyBoolCalculate)
-    m_is_ptr = m_type_flags.Test(eTypeIsPointer) ? eLazyBoolYes : eLazyBoolNo;
-  return m_is_ptr == eLazyBoolYes;
+bool ValueObjectPrinter::CalcIsRef() {
+  return m_type_flags.Test(eTypeIsReference);
 }
 
-bool ValueObjectPrinter::IsRef() {
-  if (m_is_ref == eLazyBoolCalculate)
-    m_is_ref = m_type_flags.Test(eTypeIsReference) ? eLazyBoolYes : eLazyBoolNo;
-  return m_is_ref == eLazyBoolYes;
+bool ValueObjectPrinter::CalcIsAggregate() {
+  return m_type_flags.Test(eTypeHasChildren);
 }
 
-bool ValueObjectPrinter::IsAggregate() {
-  if (m_is_aggregate == eLazyBoolCalculate)
-    m_is_aggregate =
-        m_type_flags.Test(eTypeHasChildren) ? eLazyBoolYes : eLazyBoolNo;
-  return m_is_aggregate == eLazyBoolYes;
-}
-
-bool ValueObjectPrinter::IsInstancePointer() {
+bool ValueObjectPrinter::CalcIsInstancePtr() {
   // you need to do this check on the value's clang type
-  if (m_is_instance_ptr == eLazyBoolCalculate)
-    m_is_instance_ptr = (m_valobj->GetValue().GetCompilerType().GetTypeInfo() &
-                         eTypeInstanceIsPointer) != 0
-                            ? eLazyBoolYes
-                            : eLazyBoolNo;
-  if ((eLazyBoolYes == m_is_instance_ptr) && m_valobj->IsBaseClass())
-    m_is_instance_ptr = eLazyBoolNo;
-  return m_is_instance_ptr == eLazyBoolYes;
+  bool result = (m_valobj->GetValue().GetCompilerType().GetTypeInfo() &
+                 eTypeInstanceIsPointer) != 0;
+  if (result && m_valobj->IsBaseClass())
+    result = false;
+  return result;
 }
 
 bool ValueObjectPrinter::PrintLocationIfNeeded() {
