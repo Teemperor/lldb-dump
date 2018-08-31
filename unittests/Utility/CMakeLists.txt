@@ -10,6 +10,7 @@ add_lldb_unittest(UtilityTests
   FileSpecTest.cpp
   FlagsTest.cpp
   JSONTest.cpp
+  LazyTest.cpp
   LogTest.cpp
   NameMatchesTest.cpp
   PredicateTest.cpp

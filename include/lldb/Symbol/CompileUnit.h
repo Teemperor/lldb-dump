@@ -14,6 +14,7 @@
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Symbol/DebugMacros.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Utility/Lazy.h"
 #include "lldb/Utility/Stream.h"
 #include "lldb/Utility/UserID.h"
 #include "lldb/lldb-enumerations.h"
@@ -407,7 +408,7 @@ public:
   ///     optimization.  'false' indicates that either the optimization
   ///     is unknown, or this compile unit was built without optimization.
   //------------------------------------------------------------------
-  bool GetIsOptimized();
+  bool GetIsOptimized() { return m_is_optimized.get(*this); }
 
 protected:
   void *m_user_data; ///< User data for the SymbolFile parser to store
@@ -430,8 +431,9 @@ protected:
       m_debug_macros_sp; ///< Debug macros that will get parsed on demand.
   lldb::VariableListSP m_variables; ///< Global and static variable list that
                                     ///will get parsed on demand.
-  lldb_private::LazyBool m_is_optimized; /// eLazyBoolYes if this compile unit
-                                         /// was compiled with optimization.
+  bool UpdateOptimized();
+  /// true if this compile unit was compiled with optimization.
+  LazyBoolMember<CompileUnit, &CompileUnit::UpdateOptimized> m_is_optimized;
 
 private:
   enum {

@@ -412,6 +412,14 @@ void DWARFUnit::ClearDIEsRWLocked() {
     m_dwo_symbol_file->GetCompileUnit()->ClearDIEsRWLocked();
 }
 
+bool DWARFUnit::UpdateIsOptimized() {
+  const DWARFDebugInfoEntry *die = GetUnitDIEPtrOnly();
+  if (die)
+    return die->GetAttributeValueAsUnsigned(m_dwarf, this,
+                                            DW_AT_APPLE_optimized, 0) == 1;
+  return false;
+}
+
 void DWARFUnit::BuildAddressRangeTable(SymbolFileDWARF *dwarf,
                                        DWARFDebugAranges *debug_aranges) {
   // This function is usually called if there in no .debug_aranges section in
@@ -702,19 +710,7 @@ LanguageType DWARFUnit::GetLanguageType() {
   return m_language_type;
 }
 
-bool DWARFUnit::GetIsOptimized() {
-  if (m_is_optimized == eLazyBoolCalculate) {
-    const DWARFDebugInfoEntry *die = GetUnitDIEPtrOnly();
-    if (die) {
-      m_is_optimized = eLazyBoolNo;
-      if (die->GetAttributeValueAsUnsigned(m_dwarf, this, DW_AT_APPLE_optimized,
-                                           0) == 1) {
-        m_is_optimized = eLazyBoolYes;
-      }
-    }
-  }
-  return m_is_optimized == eLazyBoolYes;
-}
+bool DWARFUnit::GetIsOptimized() { return m_is_optimized.get(*this); }
 
 SymbolFileDWARFDwo *DWARFUnit::GetDwoSymbolFile() const {
   return m_dwo_symbol_file.get();

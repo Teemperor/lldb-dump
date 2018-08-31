@@ -35,7 +35,6 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime() {}
 
 ObjCLanguageRuntime::ObjCLanguageRuntime(Process *process)
     : LanguageRuntime(process), m_impl_cache(),
-      m_has_new_literals_and_indexing(eLazyBoolCalculate),
       m_isa_to_descriptor(), m_hash_to_isa_map(), m_type_size_cache(),
       m_isa_to_descriptor_stop_id(UINT32_MAX), m_complete_class_cache(),
       m_negative_complete_class_cache() {}
@@ -152,6 +151,21 @@ bool ObjCLanguageRuntime::ClassDescriptor::IsPointerValid(
     return (check_version_specific ? CheckPointer(value, ptr_size) : true);
   else
     return false;
+}
+
+bool ObjCLanguageRuntime::ClassDescriptor::UpdateKVO() {
+  const char *class_name = GetClassName().AsCString();
+  if (class_name && *class_name)
+    return strstr(class_name, "NSKVONotifying_") == class_name;
+  return false;
+}
+
+bool ObjCLanguageRuntime::ClassDescriptor::UpdateCFType() {
+  const char *class_name = GetClassName().AsCString();
+  if (class_name && *class_name)
+    return strcmp(class_name, "__NSCFType") == 0 ||
+           strcmp(class_name, "NSCFType") == 0;
+  return false;
 }
 
 ObjCLanguageRuntime::ObjCISA

@@ -20,6 +20,7 @@
 #include "lldb/lldb-public.h"
 
 #include "lldb/Utility/Flags.h"
+#include "lldb/Utility/Lazy.h"
 
 #include "lldb/DataFormatters/DumpValueObjectOptions.h"
 #include "lldb/Symbol/CompilerType.h"
@@ -65,21 +66,16 @@ protected:
 
   const char *GetRootNameForDisplay(const char *if_fail = nullptr);
 
-  bool ShouldPrintValueObject();
+  bool ShouldPrintValueObject() { return m_should_print.get(*this); }
 
   bool ShouldPrintValidation();
 
-  bool IsNil();
-
-  bool IsUninitialized();
-
-  bool IsPtr();
-
-  bool IsRef();
-
-  bool IsInstancePointer();
-
-  bool IsAggregate();
+  bool IsNil() { return m_is_nil.get(*this); }
+  bool IsUninitialized() { return m_is_uninit.get(*this); }
+  bool IsPtr() { return m_is_ptr.get(*this); }
+  bool IsRef() { return m_is_ref.get(*this); }
+  bool IsInstancePointer() { return m_is_instance_ptr.get(*this); }
+  bool IsAggregate() { return m_is_aggregate.get(*this); }
 
   bool PrintValidationMarkerIfNeeded();
 
@@ -138,13 +134,24 @@ private:
   CompilerType m_compiler_type;
   DumpValueObjectOptions::PointerDepth m_ptr_depth;
   uint32_t m_curr_depth;
-  LazyBool m_should_print;
-  LazyBool m_is_nil;
-  LazyBool m_is_uninit;
-  LazyBool m_is_ptr;
-  LazyBool m_is_ref;
-  LazyBool m_is_aggregate;
-  LazyBool m_is_instance_ptr;
+
+  bool UpdateShouldPrint();
+  bool UpdateIsNil();
+  bool UpdateIsUnit();
+  bool UpdateIsPtr();
+  bool UpdateIsRef();
+  bool UpdateIsAggregate();
+  bool UpdateIsInstancePtr();
+
+#define LLDB_VOP ValueObjectPrinter
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateShouldPrint> m_should_print;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsNil> m_is_nil;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsUnit> m_is_uninit;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsPtr> m_is_ptr;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsRef> m_is_ref;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsAggregate> m_is_aggregate;
+  LazyBoolMember<LLDB_VOP, &LLDB_VOP::UpdateIsInstancePtr> m_is_instance_ptr;
+#undef LLDB_VOP
   std::pair<TypeSummaryImpl *, bool> m_summary_formatter;
   std::string m_value;
   std::string m_summary;
